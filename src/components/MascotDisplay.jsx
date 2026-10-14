@@ -292,6 +292,85 @@ export const CompletedMascotSVG = () => (
   </svg>
 );
 
+export const IdleMascotSVG = () => (
+  <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-md select-none">
+    <defs>
+      <radialGradient id="squirrelFurIdle" cx="40%" cy="40%" r="60%">
+        <stop offset="0%" stopColor="#FBBF72" />
+        <stop offset="100%" stopColor="#E08B3E" />
+      </radialGradient>
+      <radialGradient id="bellyFurIdle" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#FFF7E6" />
+        <stop offset="100%" stopColor="#FFE0B2" />
+      </radialGradient>
+      <filter id="glowPinkIdle" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="3" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    </defs>
+
+    {/* Big Fluffy Tail */}
+    <path
+      d="M 125 150 C 175 160 195 105 170 65 C 150 35 115 50 120 75 C 123 90 145 100 135 125 C 130 138 120 145 110 148"
+      fill="url(#squirrelFurIdle)"
+      stroke="#D2792B"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      className="animate-gentle-sway origin-bottom"
+    />
+    <path
+      d="M 135 70 C 150 85 155 110 140 130"
+      stroke="#FFF3D6"
+      strokeWidth="5"
+      strokeLinecap="round"
+      fill="none"
+      opacity="0.8"
+    />
+
+    {/* Body */}
+    <ellipse cx="100" cy="130" rx="42" ry="46" fill="url(#squirrelFurIdle)" stroke="#D2792B" strokeWidth="3.5" />
+    <ellipse cx="100" cy="135" rx="28" ry="32" fill="url(#bellyFurIdle)" />
+
+    {/* Ears */}
+    <path d="M 68 62 C 60 38 78 30 84 50 Z" fill="url(#squirrelFurIdle)" stroke="#D2792B" strokeWidth="3" />
+    <path d="M 72 56 C 68 45 76 40 79 50 Z" fill="#FFC9D4" />
+
+    <path d="M 132 62 C 140 38 122 30 116 50 Z" fill="url(#squirrelFurIdle)" stroke="#D2792B" strokeWidth="3" />
+    <path d="M 128 56 C 132 45 124 40 121 50 Z" fill="#FFC9D4" />
+
+    {/* Head */}
+    <ellipse cx="100" cy="80" rx="42" ry="36" fill="url(#squirrelFurIdle)" stroke="#D2792B" strokeWidth="3.5" />
+
+    {/* Cheeks */}
+    <circle cx="74" cy="92" r="8" fill="#FF8CA3" opacity="0.6" filter="url(#glowPinkIdle)" />
+    <circle cx="126" cy="92" r="8" fill="#FF8CA3" opacity="0.6" filter="url(#glowPinkIdle)" />
+
+    {/* Bright Welcoming Eyes */}
+    <ellipse cx="85" cy="78" rx="5.5" ry="7" fill="#2E241E" />
+    <circle cx="83" cy="75" r="2.2" fill="#FFFFFF" />
+    <circle cx="87" cy="80" r="1.2" fill="#FFFFFF" />
+
+    <ellipse cx="115" cy="78" rx="5.5" ry="7" fill="#2E241E" />
+    <circle cx="113" cy="75" r="2.2" fill="#FFFFFF" />
+    <circle cx="117" cy="80" r="1.2" fill="#FFFFFF" />
+
+    {/* Cute Nose and Friendly Smile */}
+    <polygon points="100,85 96,82 104,82" fill="#8D4315" />
+    <path d="M 95 88 Q 100 93 105 88" stroke="#8D4315" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+
+    {/* Waving Paw (Right) */}
+    <path d="M 125 115 Q 148 95 142 85" stroke="#D2792B" strokeWidth="6" strokeLinecap="round" fill="none" />
+    <circle cx="142" cy="85" r="5.5" fill="#FFE0B2" stroke="#D2792B" strokeWidth="2" />
+
+    {/* Acorn in left paw */}
+    <g transform="translate(62, 118)">
+      <path d="M 0 8 C 2 -2 18 -2 20 8 Z" fill="#8B5A2B" stroke="#5C3A21" strokeWidth="1.8" />
+      <path d="M 1 8 C 0 20 10 26 10 26 C 10 26 20 20 19 8 Z" fill="#D2995B" stroke="#5C3A21" strokeWidth="1.8" />
+      <circle cx="10" cy="14" r="5" fill="#FFE0B2" stroke="#D2792B" strokeWidth="1.5" />
+    </g>
+  </svg>
+);
+
 /**
  * MascotDisplay Component
  * Displays either user-uploaded custom image or fallback vector mascot SVG
@@ -322,6 +401,7 @@ export default function MascotDisplay({ state, customImages = {}, className = ''
       {state === 'REST' && <RestMascotSVG />}
       {state === 'PAUSED' && <PausedMascotSVG />}
       {state === 'COMPLETED' && <CompletedMascotSVG />}
+      {(!state || state === 'IDLE') && <IdleMascotSVG />}
     </div>
   );
 }

@@ -17,8 +17,8 @@ export default function CircularTimer({
   const progressPercent = totalTargetSeconds > 0 ? Math.min(100, (elapsed / totalTargetSeconds) * 100) : 0;
 
   // SVG Ring calculations
-  const size = 210;
-  const strokeWidth = 10;
+  const size = 140;
+  const strokeWidth = 7;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
@@ -101,14 +101,14 @@ export default function CircularTimer({
     <div className="flex flex-col items-center justify-center">
       {/* State Badge */}
       <div
-        className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold transition-all shadow-2xs mb-2.5 ${badge.bg} ${badge.textCol} ${badge.borderCol}`}
+        className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10.5px] font-bold transition-all shadow-2xs mb-1 ${badge.bg} ${badge.textCol} ${badge.borderCol}`}
       >
-        <span className={`w-2 h-2 rounded-full ${badge.dotCol}`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${badge.dotCol}`} />
         <span>{badge.text}</span>
       </div>
 
       {/* Circular Progress Ring */}
-      <div className="relative w-[210px] h-[210px] flex items-center justify-center">
+      <div className="relative w-[140px] h-[140px] flex items-center justify-center">
         <svg className="w-full h-full -rotate-90 transform">
           <defs>
             <linearGradient id="timerRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -151,25 +151,25 @@ export default function CircularTimer({
         {/* Inner Mascot Display with Soft Breathing Animation */}
         <div
           onClick={() => soundManager.playClick()}
-          className="absolute inset-[18px] rounded-full flex items-center justify-center cursor-pointer p-2 hover:scale-105 active:scale-95 transition-transform"
+          className="absolute inset-[10px] rounded-full flex items-center justify-center cursor-pointer p-0.5 hover:scale-105 active:scale-95 transition-transform"
           title="귀여운 뽀송이 터치!"
         >
           <div className="w-full h-full animate-soft-bounce flex items-center justify-center">
             <MascotDisplay
               state={timerState}
               customImages={customImages}
-              className="w-32 h-32"
+              className="w-20 h-20"
             />
           </div>
         </div>
       </div>
 
       {/* Countdown Digital Timer */}
-      <div className="mt-2 text-center">
-        <div className="text-3xl font-extrabold tracking-tight font-mono text-slate-800 dark:text-slate-100 select-all drop-shadow-2xs">
+      <div className="mt-0.5 text-center">
+        <div className="text-xl font-black tracking-tight font-mono text-slate-800 dark:text-slate-100 select-all drop-shadow-2xs leading-tight">
           {formatTime(remainingSeconds)}
         </div>
-        <div className="text-[11px] font-medium text-slate-400 mt-0.5">
+        <div className="text-[9.5px] font-medium text-slate-400 mt-0.5">
           {badge.sub}
         </div>
       </div>

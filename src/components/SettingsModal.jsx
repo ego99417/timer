@@ -98,34 +98,34 @@ export default function SettingsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-xl bg-white/95 dark:bg-slate-900/95 rounded-3xl p-5 shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/40 backdrop-blur-sm animate-fadeIn">
+      <div className="w-full max-w-[375px] bg-white/95 dark:bg-slate-900/95 rounded-2xl p-3 shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl flex flex-col max-h-[365px]">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 flex items-center justify-center">
-              <Settings size={18} />
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <div className="w-7 h-7 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 flex items-center justify-center">
+              <Settings size={16} />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">위젯 및 근무 설정</h3>
-              <p className="text-[11px] text-slate-400">유연근무 시간, 휴식, 도크 및 시스템 환경설정</p>
+              <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100">위젯 및 근무 설정</h3>
+              <p className="text-[10px] text-slate-400">유연근무 시간, 휴식, 도크 및 시스템 환경설정</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-2.5 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-2 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             닫기
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-1.5 my-3 bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-2xl shrink-0">
+        <div className="flex gap-1 my-2 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl shrink-0">
           {[
-            { id: 'work', label: '유연근무 / 점심', icon: Clock },
-            { id: 'pomodoro', label: '뽀모도로 루틴', icon: Coffee },
-            { id: 'dock', label: '도크 관리', icon: LayoutGrid },
-            { id: 'system', label: '시스템 / 알림', icon: Bell },
+            { id: 'work', label: '근무/점심', icon: Clock },
+            { id: 'pomodoro', label: '뽀모도로', icon: Coffee },
+            { id: 'dock', label: '도크', icon: LayoutGrid },
+            { id: 'system', label: '시스템', icon: Bell },
           ].map((tab) => {
             const Icon = tab.icon;
             return (
@@ -135,13 +135,13 @@ export default function SettingsModal({
                   setActiveTab(tab.id);
                   soundManager.playClick();
                 }}
-                className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+                className={`flex-1 py-1 px-1.5 text-[11px] font-semibold rounded-lg flex items-center justify-center gap-1 transition-all ${
                   activeTab === tab.id
                     ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm'
                     : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                 }`}
               >
-                <Icon size={13} />
+                <Icon size={12} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -149,7 +149,7 @@ export default function SettingsModal({
         </div>
 
         {/* Tab Contents (Scrollable) */}
-        <div className="flex-1 overflow-y-auto pr-1 space-y-4 py-1">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3 py-1">
           {/* TAB 1: Work Hours & Lunch */}
           {activeTab === 'work' && (
             <div className="space-y-4">
@@ -564,18 +564,18 @@ export default function SettingsModal({
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 shrink-0">
+        <div className="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl transition-colors"
+            className="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg transition-colors"
           >
             취소
           </button>
           <button
             onClick={handleSave}
-            className="px-5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl shadow-md transition-all flex items-center gap-1.5"
+            className="px-4 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg shadow-sm transition-all flex items-center gap-1.5"
           >
-            <Check size={14} />
+            <Check size={13} />
             설정 저장하기
           </button>
         </div>

@@ -25,7 +25,7 @@ export default function MiniModeBar({
   const isRunning = timerState === 'FOCUS' || timerState === 'REST';
 
   return (
-    <div className="flex items-center gap-3 px-3.5 py-2.5 bg-white/90 dark:bg-slate-900/90 rounded-2xl border border-white/80 dark:border-slate-800 shadow-xl backdrop-blur-xl transition-all animate-fadeIn app-drag cursor-move select-none">
+    <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 rounded-2xl border border-white/90 dark:border-slate-800 shadow-xl backdrop-blur-xl transition-all app-drag cursor-move select-none">
       {/* Mini Mascot Thumbnail */}
       <div className="relative w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 p-0.5 flex items-center justify-center shrink-0 shadow-2xs">
         <MascotDisplay

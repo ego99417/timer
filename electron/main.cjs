@@ -4,21 +4,12 @@ const path = require('path');
 let mainWindow = null;
 let tray = null;
 let currentMode = 'normal'; // 'normal' | 'mini'
-let normalBounds = { width: 490, height: 630 };
+let normalBounds = { width: 395, height: 400 };
 
-// Squirrel Mascot SVG / PNG icon for Tray
+// FluffyWork Peach 'f' Logo for Tray
 function createTrayIcon() {
-  // 16x16 icon for tray
-  const iconSvg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-    <circle cx="8" cy="8" r="7" fill="#FBBF72" stroke="#D2792B" stroke-width="1"/>
-    <circle cx="5" cy="4" r="2" fill="#E08B3E"/>
-    <circle cx="11" cy="4" r="2" fill="#E08B3E"/>
-    <circle cx="6" cy="8" r="1" fill="#2E241E"/>
-    <circle cx="10" cy="8" r="1" fill="#2E241E"/>
-    <ellipse cx="8" cy="10" rx="1.5" ry="1" fill="#8D4315"/>
-  </svg>`;
-  return nativeImage.createFromBuffer(Buffer.from(iconSvg));
+  const iconPath = path.join(__dirname, '../public/tray-icon.png');
+  return nativeImage.createFromPath(iconPath);
 }
 
 function createWindow() {
@@ -26,20 +17,21 @@ function createWindow() {
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
 
   // Initial position: center-right of screen
-  const initialX = Math.round(screenWidth - 510);
-  const initialY = Math.round((screenHeight - 640) / 2);
+  const initialX = Math.round(screenWidth - 415);
+  const initialY = Math.round((screenHeight - 420) / 2);
 
   mainWindow = new BrowserWindow({
-    width: 490,
-    height: 630,
+    width: 395,
+    height: 400,
     x: initialX,
     y: Math.max(20, initialY),
     frame: false, // Frameless desktop widget
     transparent: true, // Transparent glassmorphism
-    resizable: true,
+    resizable: false, // Fix to requested 395x400 widget size
     alwaysOnTop: true, // Always on Top by default
-    hasShadow: true,
+    hasShadow: false, // Windows transparent rounded corners should use CSS box-shadow
     backgroundColor: '#00000000',
+    icon: path.join(__dirname, '../public/icon.png'), // FluffyWork App Icon for Windows Taskbar
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
@@ -130,8 +122,8 @@ function setWidgetMode(mode) {
 
   if (mode === 'mini') {
     normalBounds = mainWindow.getBounds();
-    const miniWidth = 360;
-    const miniHeight = 74;
+    const miniWidth = 290;
+    const miniHeight = 64;
     // Snap to bottom-right of current screen
     const miniX = workX + workWidth - miniWidth - 20;
     const miniY = workY + workHeight - miniHeight - 20;
@@ -144,8 +136,8 @@ function setWidgetMode(mode) {
     });
   } else {
     // Restore normal widget mode
-    const normW = Math.min(490, workWidth - 40);
-    const normH = Math.min(630, workHeight - 40);
+    const normW = 395;
+    const normH = 400;
     const restoredX = Math.max(workX + 20, Math.min(normalBounds.x, workX + workWidth - normW - 20));
     const restoredY = Math.max(workY + 20, Math.min(normalBounds.y, workY + workHeight - normH - 20));
 

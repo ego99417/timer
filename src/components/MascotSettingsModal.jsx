@@ -72,29 +72,29 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-lg bg-white/95 dark:bg-slate-900/95 rounded-3xl p-5 shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/50 backdrop-blur-sm animate-fadeIn">
+      <div className="w-full max-w-[365px] max-h-[365px] bg-white/95 dark:bg-slate-900/95 rounded-2xl p-3 shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-pink-50 dark:bg-pink-950/60 text-pink-500 flex items-center justify-center">
-              <Image size={18} />
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <div className="w-6 h-6 rounded-lg bg-pink-50 dark:bg-pink-950/60 text-pink-500 flex items-center justify-center">
+              <Image size={14} />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">캐릭터 및 이미지 커스텀</h3>
-              <p className="text-[11px] text-slate-400">상태별로 원하는 GIF, PNG, 또는 기본 뽀송이를 설정하세요</p>
+              <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100">캐릭터 및 이미지 커스텀</h3>
+              <p className="text-[10px] text-slate-400">상태별 원하는 캐릭터/이미지를 설정하세요</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-2.5 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-2 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             닫기
           </button>
         </div>
 
         {/* State Tabs */}
-        <div className="grid grid-cols-4 gap-1.5 my-3 bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-2xl">
+        <div className="grid grid-cols-4 gap-1 my-1.5 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl shrink-0">
           {Object.keys(stateLabels).map((st) => (
             <button
               key={st}
@@ -102,9 +102,9 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
                 setActiveTab(st);
                 soundManager.playClick();
               }}
-              className={`py-1.5 px-2 text-xs font-semibold rounded-xl transition-all ${
+              className={`py-1 px-1.5 text-[11px] font-semibold rounded-lg transition-all ${
                 activeTab === st
-                  ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm'
+                  ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
@@ -113,101 +113,97 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
           ))}
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex flex-col sm:flex-row gap-4 my-3 items-center">
-          {/* Live Preview Card */}
-          <div className="w-36 h-36 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-pink-50/50 dark:from-slate-800 dark:to-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 flex flex-col items-center justify-center p-2 relative shadow-inner shrink-0">
-            <MascotDisplay
-              state={activeTab}
-              customImages={{ [activeTab]: urls[activeTab] }}
-              className="w-28 h-28"
-            />
-            <span className="absolute bottom-1.5 text-[10px] font-bold text-slate-400 bg-white/70 dark:bg-slate-800/80 px-2 py-0.5 rounded-full">
-              {urls[activeTab] ? '커스텀 이미지' : '기본 일러스트'}
-            </span>
-          </div>
-
-          {/* Form Controls */}
-          <div className="flex-1 w-full space-y-2.5">
-            <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 block mb-1">
-                {stateLabels[activeTab].name}
-              </label>
-              <p className="text-[11px] text-slate-400 mb-2">{stateLabels[activeTab].desc}</p>
-              
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  placeholder="이미지 URL 직접 입력 (https://... .gif/.png)"
-                  value={urls[activeTab]}
-                  onChange={(e) => handleUrlChange(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-400/50"
-                />
-
-                <div className="flex gap-2">
-                  <label className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs">
-                    <Upload size={13} />
-                    <span>로컬 파일 업로드</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                    />
-                  </label>
-
-                  {urls[activeTab] && (
-                    <button
-                      onClick={handleResetCurrent}
-                      className="px-2.5 py-1.5 text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors flex items-center gap-1"
-                      title="기본 일러스트로 초기화"
-                    >
-                      <RotateCcw size={12} />
-                      초기화
-                    </button>
-                  )}
-                </div>
-              </div>
+        {/* Main Content Area - Scrollable with min-h-0 to avoid overflow */}
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
+          <div className="flex gap-2.5 items-center">
+            {/* Live Preview Card */}
+            <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-indigo-50/50 to-pink-50/50 dark:from-slate-800 dark:to-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 flex flex-col items-center justify-center p-1 relative shadow-inner shrink-0">
+              <MascotDisplay
+                state={activeTab}
+                customImages={{ [activeTab]: urls[activeTab] }}
+                className="w-16 h-16"
+              />
+              <span className="absolute bottom-0.5 text-[8px] font-bold text-slate-400 bg-white/80 dark:bg-slate-800/90 px-1 py-0.2 rounded-full leading-none">
+                {urls[activeTab] ? '커스텀' : '기본'}
+              </span>
             </div>
 
-            {/* Quick Presets */}
-            <div>
-              <span className="text-[11px] font-semibold text-slate-400 block mb-1">추천 프리셋</span>
-              <div className="flex flex-wrap gap-1.5">
-                {presets[activeTab].map((p, idx) => (
+            {/* Form Controls */}
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                  {stateLabels[activeTab].name}
+                </span>
+                {urls[activeTab] && (
                   <button
-                    key={idx}
-                    onClick={() => {
-                      handleUrlChange(p.url);
-                      soundManager.playClick();
-                    }}
-                    className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all ${
-                      urls[activeTab] === p.url
-                        ? 'bg-pink-50 dark:bg-pink-950/40 border-pink-300 dark:border-pink-800 text-pink-600 dark:text-pink-300 font-medium'
-                        : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-700'
-                    }`}
+                    onClick={handleResetCurrent}
+                    className="text-[10px] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-1.5 py-0.5 rounded transition-colors flex items-center gap-0.5"
+                    title="기본 일러스트로 초기화"
                   >
-                    {p.name}
+                    <RotateCcw size={10} />
+                    초기화
                   </button>
-                ))}
+                )}
               </div>
+
+              <input
+                type="text"
+                placeholder="이미지 URL 직접 입력"
+                value={urls[activeTab]}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                className="w-full px-2.5 py-1 text-xs rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-pink-400"
+              />
+
+              <label className="cursor-pointer flex items-center justify-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-2xs">
+                <Upload size={12} />
+                <span>내 PC 이미지 파일 업로드</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Quick Presets */}
+          <div className="pt-1">
+            <span className="text-[10px] font-semibold text-slate-400 block mb-1">추천 프리셋</span>
+            <div className="flex flex-wrap gap-1">
+              {presets[activeTab].map((p, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    handleUrlChange(p.url);
+                    soundManager.playClick();
+                  }}
+                  className={`text-[10px] px-2 py-0.5 rounded-md border transition-all ${
+                    urls[activeTab] === p.url
+                      ? 'bg-pink-50 dark:bg-pink-950/40 border-pink-300 dark:border-pink-800 text-pink-600 dark:text-pink-300 font-medium'
+                      : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {p.name}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+        <div className="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl transition-colors"
+            className="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg transition-colors"
           >
             취소
           </button>
           <button
             onClick={handleSave}
-            className="px-5 py-2 text-xs font-semibold bg-pink-500 hover:bg-pink-600 active:scale-95 text-white rounded-xl shadow-md transition-all flex items-center gap-1.5"
+            className="px-4 py-1.5 text-xs font-semibold bg-pink-500 hover:bg-pink-600 active:scale-95 text-white rounded-lg shadow-sm transition-all flex items-center gap-1"
           >
-            <Check size={14} />
+            <Check size={13} />
             설정 저장하기
           </button>
         </div>

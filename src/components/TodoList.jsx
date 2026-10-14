@@ -47,15 +47,15 @@ export default function TodoList({ todos, setTodos, onClose }) {
   const completedCount = todos.filter((t) => t.completed).length;
 
   return (
-    <div className="w-80 max-w-full flex flex-col p-4 bg-white/90 dark:bg-slate-900/90 rounded-2xl shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 flex items-center justify-center">
-            <ListTodo size={16} />
+    <div className="w-[320px] max-w-full max-h-[365px] flex flex-col p-3 bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 flex items-center justify-center">
+            <ListTodo size={14} />
           </div>
           <div>
-            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">오늘의 할 일</h3>
-            <p className="text-[11px] text-slate-400">
+            <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100">오늘의 할 일</h3>
+            <p className="text-[10px] text-slate-400">
               {todos.length > 0 ? `${completedCount} / ${todos.length} 완료` : '등록된 할 일 없음'}
             </p>
           </div>
@@ -63,7 +63,7 @@ export default function TodoList({ todos, setTodos, onClose }) {
         {onClose && (
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-2 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             닫기
           </button>
@@ -72,7 +72,7 @@ export default function TodoList({ todos, setTodos, onClose }) {
 
       {/* Progress Bar */}
       {todos.length > 0 && (
-        <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full my-2.5 overflow-hidden">
+        <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-full my-2 overflow-hidden shrink-0">
           <div
             className="bg-indigo-500 h-full rounded-full transition-all duration-300"
             style={{ width: `${(completedCount / todos.length) * 100}%` }}
@@ -81,31 +81,31 @@ export default function TodoList({ todos, setTodos, onClose }) {
       )}
 
       {/* Add Input */}
-      <form onSubmit={handleAdd} className="flex gap-1.5 mt-2 mb-3">
+      <form onSubmit={handleAdd} className="flex gap-1.5 my-1.5 shrink-0">
         <input
           type="text"
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
           placeholder="새로운 할 일 입력 (Enter)"
-          className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/50"
+          className="flex-1 px-2.5 py-1 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
         />
         <button
           type="submit"
-          className="px-2.5 py-1.5 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white rounded-xl text-xs font-medium flex items-center justify-center transition-all shadow-sm"
+          className="px-2 py-1 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white rounded-xl text-xs font-medium flex items-center justify-center transition-all shadow-sm"
         >
-          <Plus size={14} />
+          <Plus size={13} />
         </button>
       </form>
 
       {/* Filter Tabs */}
-      <div className="flex gap-1 mb-2 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-lg">
+      <div className="flex gap-1 mb-1.5 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-lg shrink-0">
         {['all', 'active', 'completed'].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`flex-1 py-1 text-[11px] font-medium rounded-md transition-all ${
+            className={`flex-1 py-0.5 text-[10.5px] font-medium rounded-md transition-all ${
               filter === f
-                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-2xs'
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
@@ -115,7 +115,7 @@ export default function TodoList({ todos, setTodos, onClose }) {
       </div>
 
       {/* Todo Item List */}
-      <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1">
         {filteredTodos.length === 0 ? (
           <div className="py-6 text-center text-xs text-slate-400">
             {filter === 'completed'

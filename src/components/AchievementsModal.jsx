@@ -57,74 +57,74 @@ export default function AchievementsModal({ achievements, onClose }) {
   const unlockedCount = badgeList.filter((b) => b.unlocked).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-md bg-white/95 dark:bg-slate-900/95 rounded-3xl p-5 shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center">
-              <Award size={18} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/40 backdrop-blur-sm animate-fadeIn">
+      <div className="w-full max-w-[375px] max-h-[365px] bg-white/95 dark:bg-slate-900/95 rounded-2xl p-3 shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl flex flex-col">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <div className="w-7 h-7 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center">
+              <Award size={16} />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                 업적 및 배지
-                <span className="text-[11px] font-normal text-amber-500 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-normal text-amber-500 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.2 rounded-full">
                   {unlockedCount} / {badgeList.length} 달성
                 </span>
               </h3>
-              <p className="text-[11px] text-slate-400">근무 목표를 달성하고 귀여운 업적 배지를 모아보세요!</p>
+              <p className="text-[10px] text-slate-400">근무 목표를 달성하고 업적 배지를 모아보세요!</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-2.5 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-2 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             닫기
           </button>
         </div>
 
-        {/* Badge Grid */}
-        <div className="grid grid-cols-2 gap-2.5 my-4 max-h-[360px] overflow-y-auto pr-1">
+        {/* Badge Grid - Scrollable */}
+        <div className="grid grid-cols-2 gap-2 my-2 flex-1 min-h-0 overflow-y-auto pr-1">
           {badgeList.map((badge) => (
             <div
               key={badge.id}
-              className={`p-3 rounded-2xl border transition-all ${
+              className={`p-2.5 rounded-xl border transition-all ${
                 badge.unlocked
                   ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-800/40 shadow-xs'
                   : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/50 dark:border-slate-800/50 opacity-60'
               }`}
             >
               <div className="flex items-start justify-between">
-                <span className="text-2xl drop-shadow-xs">{badge.icon}</span>
+                <span className="text-xl drop-shadow-xs">{badge.icon}</span>
                 {badge.unlocked ? (
-                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100/70 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
-                    <CheckCircle size={10} /> 달성
+                  <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100/70 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded-md flex items-center gap-0.5">
+                    <CheckCircle size={9} /> 달성
                   </span>
                 ) : (
-                  <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
-                    <Lock size={10} /> 미달성
+                  <span className="text-[9px] text-slate-400 flex items-center gap-0.5">
+                    <Lock size={9} /> 미달성
                   </span>
                 )}
               </div>
-              <h4 className="font-bold text-xs mt-2 text-slate-800 dark:text-slate-100">{badge.title}</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">{badge.desc}</p>
+              <h4 className="font-bold text-[11px] mt-1.5 text-slate-800 dark:text-slate-100">{badge.title}</h4>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug line-clamp-2">{badge.desc}</p>
               
               {badge.currentText && !badge.unlocked && (
-                <div className="mt-2">
+                <div className="mt-1.5">
                   <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full overflow-hidden">
                     <div
                       className="bg-amber-500 h-full rounded-full transition-all"
                       style={{ width: `${badge.progress}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-slate-400 mt-0.5 block text-right">{badge.currentText}</span>
+                  <span className="text-[9px] text-slate-400 mt-0.5 block text-right">{badge.currentText}</span>
                 </div>
               )}
             </div>
           ))}
         </div>
 
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-center">
-          <p className="text-[11px] text-slate-400">🌱 매일매일 건강하고 즐겁게 일하는 당신을 응원해요!</p>
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
+          <p className="text-[10px] text-slate-400">🌱 매일매일 건강하고 즐겁게 일하는 당신을 응원해요!</p>
         </div>
       </div>
     </div>
