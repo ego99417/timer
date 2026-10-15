@@ -307,6 +307,10 @@ export default function App() {
 
   // Clock Out Action (Manual or Automatic)
   const handleClockOut = (isAuto = false) => {
+    // If currently in mini mode, automatically restore to normal widget mode
+    // so the celebration modal and stats are fully displayed at 395x400!
+    handleSetViewMode("normal");
+
     const nowStr = new Date().toLocaleTimeString("ko-KR", { hour12: false });
     const workedMins = Math.round(elapsedSeconds / 60);
 
@@ -495,24 +499,16 @@ export default function App() {
           timerState={timerState}
           remainingSeconds={remainingSeconds}
           customImages={customImages}
+          progressPercent={totalTargetSeconds > 0 ? (elapsedSeconds / totalTargetSeconds) * 100 : 0}
           onPlayResume={handleClockIn}
           onPause={handlePause}
-          onClockOut={() => handleClockOut(false)}
+          onClockOut={() => {
+            handleSetViewMode("normal");
+            handleClockOut(false);
+          }}
           onExpand={() => handleSetViewMode("normal")}
         />
         {warningToastVisible && <WarningToast onClose={() => setWarningToastVisible(false)} />}
-        {celebrationModalVisible && celebrationSummary && (
-          <CelebrationModal
-            summary={celebrationSummary}
-            customImages={customImages}
-            onClose={() => setCelebrationModalVisible(false)}
-            onViewStats={() => {
-              setCelebrationModalVisible(false);
-              handleSetViewMode("normal");
-              setActiveModal("stats");
-            }}
-          />
-        )}
       </div>
     );
   }
@@ -522,12 +518,20 @@ export default function App() {
   const isElectron = typeof window !== "undefined" && Boolean(window.electronAPI?.isElectron);
 
   return (
-    <div className={`w-full h-full relative select-none overflow-hidden ${settings.darkMode ? "dark" : ""}`}>
+    <div
+      className={`w-full h-full relative select-none overflow-hidden ${settings.darkMode ? "dark" : ""} ${
+        !isElectron ? "bg-slate-100/90 dark:bg-slate-950 flex items-center justify-center p-2 sm:p-4" : ""
+      }`}
+    >
       {/* 5-Min Warning Toast Notification */}
       {warningToastVisible && <WarningToast onClose={() => setWarningToastVisible(false)} />}
 
-      {/* Main Glassmorphic Desktop Floating Widget Container - exactly 400x507 */}
-      <div className="w-full h-full glass-panel rounded-[28px] p-3.5 flex flex-col justify-between overflow-hidden relative border border-white/80 dark:border-slate-800/80 shadow-2xl">
+      {/* Main Glassmorphic Container (Fits 395x400 on Desktop or mobile card) */}
+      <div
+        className={`w-full h-full ${
+          !isElectron ? "max-w-[395px] max-h-[460px] shadow-2xl" : ""
+        } glass-panel rounded-[28px] p-3.5 flex flex-col justify-between overflow-hidden relative border border-white/80 dark:border-slate-800/80`}
+      >
         {/* Top Header Bar */}
         <div className="flex items-center justify-between pb-2 mb-1 border-b border-slate-200/50 dark:border-slate-800/60 app-drag cursor-move select-none shrink-0">
           <div className="flex items-center gap-1.5">
@@ -686,17 +690,6 @@ export default function App() {
                 <Square size={11} />
                 <span>퇴근</span>
               </button>
-
-              {/* Optional Skip Button */}
-              {settings.showSkipButton && (
-                <button
-                  onClick={handleSkip}
-                  className="p-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 font-medium text-xs flex items-center justify-center shadow-xs active:scale-95 transition-all"
-                  title="다음 단계 건너뛰기"
-                >
-                  <SkipForward size={12} />
-                </button>
-              )}
             </div>
 
             {/* Quick Daily Target Summary info */}
@@ -715,7 +708,7 @@ export default function App() {
 
         {/* Floating Todo Flyout (when opened via dock) */}
         {activeModal === "todo" && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/40 backdrop-blur-sm animate-fadeIn">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 bg-black/40 dark:bg-black/60 rounded-[28px] overflow-hidden animate-fadeIn">
             <TodoList todos={todos} setTodos={setTodos} onClose={() => setActiveModal(null)} />
           </div>
         )}

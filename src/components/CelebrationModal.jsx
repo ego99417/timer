@@ -54,8 +54,8 @@ export default function CelebrationModal({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-[365px] max-h-[365px] bg-white/95 dark:bg-slate-900/95 rounded-2xl p-3 shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl text-center relative overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 bg-black/40 dark:bg-black/60 rounded-[28px] overflow-hidden animate-fadeIn">
+      <div className="w-full max-w-[365px] max-h-[365px] bg-white dark:bg-slate-900 rounded-2xl p-3 shadow-md border border-slate-200/90 dark:border-slate-700/80 text-center relative overflow-hidden flex flex-col">
         {/* Background Sparkle Decor */}
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-pink-300/20 dark:bg-pink-600/10 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-amber-300/20 dark:bg-amber-600/10 rounded-full blur-2xl pointer-events-none" />

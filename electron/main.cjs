@@ -6,10 +6,82 @@ let tray = null;
 let currentMode = 'normal'; // 'normal' | 'mini'
 let normalBounds = { width: 395, height: 400 };
 
-// FluffyWork Peach 'f' Logo for Tray
+// FluffyWork Tray Icon (Supports both Windows and macOS Menu Bar)
 function createTrayIcon() {
   const iconPath = path.join(__dirname, '../public/tray-icon.png');
-  return nativeImage.createFromPath(iconPath);
+  const img = nativeImage.createFromPath(iconPath);
+  if (process.platform === 'darwin') {
+    // macOS menu bar icon should be 18x18 or 22x22 and template enabled for dark/light mode
+    const resized = img.resize({ width: 18, height: 18 });
+    resized.setTemplateImage(true);
+    return resized;
+  }
+  return img;
+}
+
+// macOS Application Menu (Required for Cmd+C, Cmd+V, Cmd+Q shortcuts on macOS)
+function setupAppMenu() {
+  if (process.platform === 'darwin') {
+    const template = [
+      {
+        label: 'FluffyWork',
+        submenu: [
+          { role: 'about', label: 'FluffyWork 정보' },
+          { type: 'separator' },
+          { role: 'hide', label: 'FluffyWork 가리기' },
+          { role: 'hideOthers', label: '기타 가리기' },
+          { role: 'unhide', label: '모두 보기' },
+          { type: 'separator' },
+          { role: 'quit', label: 'FluffyWork 종료' },
+        ],
+      },
+      {
+        label: '편집',
+        submenu: [
+          { role: 'undo', label: '실행 취소' },
+          { role: 'redo', label: '다시 실행' },
+          { type: 'separator' },
+          { role: 'cut', label: '오려두기' },
+          { role: 'copy', label: '복사' },
+          { role: 'paste', label: '붙여넣기' },
+          { role: 'selectAll', label: '전체 선택' },
+        ],
+      },
+      {
+        label: '보기',
+        submenu: [
+          {
+            label: '미니 모드 전환',
+            accelerator: 'CmdOrCtrl+M',
+            click: () => {
+              const nextMode = currentMode === 'normal' ? 'mini' : 'normal';
+              setWidgetMode(nextMode);
+              if (mainWindow) mainWindow.webContents.send('widget:mode-changed', nextMode);
+            },
+          },
+          { role: 'reload', label: '새로고침' },
+        ],
+      },
+      {
+        label: '창',
+        submenu: [
+          { role: 'minimize', label: '최소화' },
+          { role: 'close', label: '창 닫기' },
+        ],
+      },
+    ];
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  }
+}
+
+function setWindowAlwaysOnTop(flag) {
+  if (!mainWindow) return;
+  if (process.platform === 'darwin') {
+    mainWindow.setAlwaysOnTop(flag, 'floating');
+    mainWindow.setVisibleOnAllWorkspaces(flag, { visibleOnFullScreen: true });
+  } else {
+    mainWindow.setAlwaysOnTop(flag);
+  }
 }
 
 function createWindow() {
@@ -27,18 +99,23 @@ function createWindow() {
     y: Math.max(20, initialY),
     frame: false, // Frameless desktop widget
     transparent: true, // Transparent glassmorphism
-    resizable: false, // Fix to requested 395x400 widget size
+    resizable: false, // Fixed widget size
     alwaysOnTop: true, // Always on Top by default
-    hasShadow: false, // Windows transparent rounded corners should use CSS box-shadow
+    hasShadow: false, // Windows/macOS transparent corners use CSS shadow
     backgroundColor: '#00000000',
-    icon: path.join(__dirname, '../public/icon.png'), // FluffyWork App Icon for Windows Taskbar
+    icon: path.join(__dirname, '../public/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
-      backgroundThrottling: false, // Keep timer running accurately in background
+      backgroundThrottling: false, // Accurate timer in background
     },
   });
+
+  // macOS: Ensure always on top floats across spaces/virtual desktops
+  if (process.platform === 'darwin') {
+    mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
 
   normalBounds = mainWindow.getBounds();
 
@@ -46,7 +123,6 @@ function createWindow() {
   const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://127.0.0.1:5173';
   if (process.env.NODE_ENV === 'development' || !app.isPackaged) {
     mainWindow.loadURL(devServerUrl).catch(() => {
-      // Retry in 1s if dev server is warming up
       setTimeout(() => mainWindow.loadURL(devServerUrl), 1000);
     });
   } else {
@@ -61,7 +137,9 @@ function createWindow() {
       {
         label: 'FluffyWork 열기',
         click: () => {
-          if (mainWindow) {
+          if (!mainWindow) {
+            createWindow();
+          } else {
             mainWindow.show();
             mainWindow.focus();
           }
@@ -72,7 +150,7 @@ function createWindow() {
         click: () => {
           const nextMode = currentMode === 'normal' ? 'mini' : 'normal';
           setWidgetMode(nextMode);
-          mainWindow.webContents.send('widget:mode-changed', nextMode);
+          if (mainWindow) mainWindow.webContents.send('widget:mode-changed', nextMode);
         },
       },
       {
@@ -80,9 +158,7 @@ function createWindow() {
         type: 'checkbox',
         checked: true,
         click: (menuItem) => {
-          if (mainWindow) {
-            mainWindow.setAlwaysOnTop(menuItem.checked);
-          }
+          setWindowAlwaysOnTop(menuItem.checked);
         },
       },
       { type: 'separator' },
@@ -97,7 +173,9 @@ function createWindow() {
     tray.setToolTip('FluffyWork - 유연근무 힐링 타이머 위젯');
     tray.setContextMenu(contextMenu);
     tray.on('click', () => {
-      if (mainWindow.isVisible()) {
+      if (!mainWindow) {
+        createWindow();
+      } else if (mainWindow.isVisible()) {
         mainWindow.focus();
       } else {
         mainWindow.show();
@@ -160,19 +238,30 @@ ipcMain.on('widget:minimize', () => {
 });
 
 ipcMain.on('widget:close', () => {
-  if (mainWindow) mainWindow.close();
+  if (process.platform === 'darwin') {
+    // On macOS, closing window hides it or destroys it
+    if (mainWindow) mainWindow.hide();
+  } else {
+    if (mainWindow) mainWindow.close();
+  }
 });
 
 ipcMain.on('widget:set-always-on-top', (_event, flag) => {
-  if (mainWindow) mainWindow.setAlwaysOnTop(flag);
+  setWindowAlwaysOnTop(flag);
 });
 
 // App Lifecycle
 app.whenReady().then(() => {
+  setupAppMenu();
   createWindow();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (mainWindow === null) {
+      createWindow();
+    } else {
+      mainWindow.show();
+      mainWindow.focus();
+    }
   });
 });
 

@@ -47,7 +47,7 @@ export default function TodoList({ todos, setTodos, onClose }) {
   const completedCount = todos.filter((t) => t.completed).length;
 
   return (
-    <div className="w-[320px] max-w-full max-h-[365px] flex flex-col p-3 bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl">
+    <div className="w-[320px] max-w-full max-h-[365px] flex flex-col p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-700/80 overflow-hidden">
       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
         <div className="flex items-center gap-1.5">
           <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 flex items-center justify-center">

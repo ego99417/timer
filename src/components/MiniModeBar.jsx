@@ -7,6 +7,7 @@ export default function MiniModeBar({
   timerState,
   remainingSeconds,
   customImages,
+  progressPercent = 0,
   onPlayResume,
   onPause,
   onClockOut,
@@ -25,12 +26,13 @@ export default function MiniModeBar({
   const isRunning = timerState === 'FOCUS' || timerState === 'REST';
 
   return (
-    <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 rounded-2xl border border-white/90 dark:border-slate-800 shadow-xl backdrop-blur-xl transition-all app-drag cursor-move select-none">
+    <div className="flex items-center gap-2.5 px-3 py-1.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-md transition-all app-drag cursor-move select-none">
       {/* Mini Mascot Thumbnail */}
       <div className="relative w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 p-0.5 flex items-center justify-center shrink-0 shadow-2xs">
         <MascotDisplay
           state={timerState}
           customImages={customImages}
+          progressPercent={progressPercent}
           className="w-full h-full"
         />
         {/* Status indicator dot */}

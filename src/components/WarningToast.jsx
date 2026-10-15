@@ -5,7 +5,7 @@ import { soundManager } from '../utils/audio';
 export default function WarningToast({ onClose }) {
   return (
     <div className="fixed top-5 right-5 z-50 max-w-sm w-full animate-bounce-short">
-      <div className="p-4 bg-amber-50 dark:bg-amber-950/90 border border-amber-300 dark:border-amber-700/80 rounded-2xl shadow-2xl backdrop-blur-md flex items-start gap-3">
+      <div className="p-3.5 bg-amber-50 dark:bg-amber-950 border border-amber-300 dark:border-amber-700/80 rounded-2xl shadow-md flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md animate-pulse">
           <Bell size={20} />
         </div>

@@ -98,8 +98,8 @@ export default function SettingsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-[375px] bg-white/95 dark:bg-slate-900/95 rounded-2xl p-3 shadow-2xl border border-white/60 dark:border-slate-800 backdrop-blur-xl flex flex-col max-h-[365px]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 bg-black/40 dark:bg-black/60 rounded-[28px] overflow-hidden animate-fadeIn">
+      <div className="w-full max-w-[375px] bg-white dark:bg-slate-900 rounded-2xl p-3 shadow-md border border-slate-200/90 dark:border-slate-700/80 flex flex-col max-h-[365px] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-1.5">
@@ -498,30 +498,6 @@ export default function SettingsModal({
 
                 <div className="border-t border-slate-200/60 dark:border-slate-700/60" />
 
-                {/* 3. Show Skip Button */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                      건너뛰기(Skip) 버튼 표시
-                    </h4>
-                    <p className="text-[11px] text-slate-400">
-                      컨트롤러 바에 단계 건너뛰기 액션 버튼을 노출합니다
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={localSettings.showSkipButton}
-                    onChange={(e) =>
-                      setLocalSettings((prev) => ({
-                        ...prev,
-                        showSkipButton: e.target.checked,
-                      }))
-                    }
-                    className="w-4 h-4 text-indigo-600 rounded-sm cursor-pointer"
-                  />
-                </div>
-
-                <div className="border-t border-slate-200/60 dark:border-slate-700/60" />
 
                 {/* 4. Sound Effects */}
                 <div className="flex items-center justify-between">

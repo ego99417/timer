@@ -158,6 +158,7 @@ export default function CircularTimer({
             <MascotDisplay
               state={timerState}
               customImages={customImages}
+              progressPercent={progressPercent}
               className="w-20 h-20"
             />
           </div>
@@ -170,7 +171,23 @@ export default function CircularTimer({
           {formatTime(remainingSeconds)}
         </div>
         <div className="text-[9.5px] font-medium text-slate-400 mt-0.5">
-          {badge.sub}
+          {customImages?.mode === 'growth' ? (
+            <span className="text-pink-600 dark:text-pink-400 font-semibold">
+              {progressPercent >= 100 || timerState === 'COMPLETED'
+                ? 'Lv.6 퇴근 달성! 🎉'
+                : progressPercent >= 85
+                ? 'Lv.5 프로 마스터 🔥'
+                : progressPercent >= 60
+                ? 'Lv.4 열일 직장인 💻'
+                : progressPercent >= 35
+                ? 'Lv.3 성장기 🎒'
+                : progressPercent >= 15
+                ? 'Lv.2 아기 다람쥐 🍼'
+                : 'Lv.1 알 단계 🌱'}
+            </span>
+          ) : (
+            badge.sub
+          )}
         </div>
       </div>
 

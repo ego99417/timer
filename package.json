@@ -15,7 +15,10 @@
     "electron:dev": "concurrently -k \"vite --port 5173\" \"wait-on tcp:5173 && electron .\"",
     "start": "concurrently -k \"vite --port 5173\" \"wait-on tcp:5173 && electron .\"",
     "dist": "npm run build && electron-builder --win",
-    "dist:portable": "npm run build && electron-builder --win portable"
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:portable": "npm run build && electron-builder --win portable",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:all": "npm run build && electron-builder -mw"
   },
   "build": {
     "appId": "com.fluffywork.widget",
@@ -29,6 +32,31 @@
       "electron/**/*",
       "public/**/*"
     ],
+    "mac": {
+      "icon": "build/icon.png",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "title": "${productName} ${version}",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
     "win": {
       "icon": "build/icon.ico",
       "target": [
