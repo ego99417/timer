@@ -7,12 +7,12 @@
 
 ## 📥 다운로드 (바로 설치 및 실행)
 
-별도의 개발 도구 설치 없이 **Windows에서 바로 실행 가능한 최신 프로그램 파일**을 다운로드할 수 있습니다:
+별도의 개발 도구 설치 없이 **Windows/Mac에서 바로 실행 가능한 최신 프로그램 파일**을 다운로드할 수 있습니다:
 
 | 구분 | 파일명 | 설명 | 바로가기 |
 | :--- | :--- | :--- | :--- |
-| **설치형 (권장)** | `FluffyWork Setup 1.0.0.exe` | 바탕화면 및 시작 메뉴 바로가기 자동 생성 | [다운로드 (Releases)](https://github.com/ego99417/timer/releases/latest) |
-| **무설치 포터블형** | `FluffyWork 1.0.0.exe` | 설치 없이 더블 클릭 즉시 실행 (USB/단독 소장용) | [다운로드 (Releases)](https://github.com/ego99417/timer/releases/latest) |
+| **설치형 (권장)** | `FluffyWork Setup x.x.x.exe` (윈도우) |  `FluffyWork Setup x.x.x.dmg`(맥북) | 바탕화면 및 시작 메뉴 바로가기 자동 생성 | [다운로드 (Releases)](https://github.com/ego99417/timer/releases/latest) |
+| **무설치 포터블형** | `FluffyWork Setup x.x.x.exe` (윈도우) |  `FluffyWork Setup x.x.x.dmg`(맥북) | 설치 없이 더블 클릭 즉시 실행 (USB/단독 소장용) | [다운로드 (Releases)](https://github.com/ego99417/timer/releases/latest) |
 
 > 💡 **Windows 스마트스크린(SmartScreen) 안내**  
 > 오픈소스 소프트웨어 특성상 처음 실행할 때 *"Windows의 PC 보호"* 파란색 안내창이 뜰 수 있습니다.  
