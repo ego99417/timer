@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 import { Sparkles, CheckCircle2, Clock, Calendar, Heart } from 'lucide-react';
 import MascotDisplay from './MascotDisplay';
 import { soundManager } from '../utils/audio';
+import { formatTo12Hour } from '../utils/timeFormat';
 
 export default function CelebrationModal({
   summary,
@@ -99,7 +100,7 @@ export default function CelebrationModal({
                 <Calendar size={12} /> 출퇴근 시각
               </span>
               <span className="text-slate-700 dark:text-slate-200 font-medium text-[11px]">
-                {summary.clockInTime} ~ {summary.clockOutTime}
+                {formatTo12Hour(summary.clockInTime)} ~ {formatTo12Hour(summary.clockOutTime)}
               </span>
             </div>
 

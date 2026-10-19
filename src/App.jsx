@@ -20,6 +20,7 @@ import {
   Award,
   Minus,
   X,
+  Edit2,
 } from "lucide-react";
 import DockBar from "./components/DockBar";
 import CircularTimer from "./components/CircularTimer";
@@ -31,7 +32,9 @@ import MascotSettingsModal from "./components/MascotSettingsModal";
 import SettingsModal from "./components/SettingsModal";
 import CelebrationModal from "./components/CelebrationModal";
 import WarningToast from "./components/WarningToast";
+import ClockInEditModal from "./components/ClockInEditModal";
 import { soundManager } from "./utils/audio";
+import { formatTo12Hour } from "./utils/timeFormat";
 
 // Helper to get today's key: mon, tue, wed, thu, fri, sat, sun
 const getTodayKey = () => {
@@ -155,7 +158,10 @@ export default function App() {
   // 7. Timer Runtime State
   const [timerState, setTimerState] = useState("IDLE"); // 'IDLE' | 'FOCUS' | 'REST' | 'PAUSED' | 'COMPLETED'
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [clockInTime, setClockInTime] = useState(null);
+  const [clockInTime, setClockInTime] = useState(() => {
+    const saved = localStorage.getItem("fluffy_clock_in_time");
+    return saved ? formatTo12Hour(saved) : null;
+  });
   const [hasTriggered5MinAlert, setHasTriggered5MinAlert] = useState(false);
   const [warningToastVisible, setWarningToastVisible] = useState(false);
   const [celebrationModalVisible, setCelebrationModalVisible] = useState(false);
@@ -219,6 +225,14 @@ export default function App() {
     localStorage.setItem("fluffy_achievements", JSON.stringify(achievements));
   }, [achievements]);
 
+  useEffect(() => {
+    if (clockInTime) {
+      localStorage.setItem("fluffy_clock_in_time", clockInTime);
+    } else {
+      localStorage.removeItem("fluffy_clock_in_time");
+    }
+  }, [clockInTime]);
+
   // Request notification permission if enabled
   useEffect(() => {
     if (settings.osNotifications && typeof Notification !== "undefined") {
@@ -281,7 +295,7 @@ export default function App() {
 
   // Clock In Action
   const handleClockIn = () => {
-    const nowStr = new Date().toLocaleTimeString("ko-KR", { hour12: false });
+    const nowStr = formatTo12Hour(new Date());
     if (!clockInTime) {
       setClockInTime(nowStr);
     }
@@ -299,6 +313,20 @@ export default function App() {
     lastTickRef.current = Date.now();
   };
 
+  // Directly change / register Clock In Time
+  const handleSaveClockInTime = ({ newClockInTime, newElapsedSeconds, startTimer }) => {
+    setClockInTime(newClockInTime);
+    if (typeof newElapsedSeconds === "number") {
+      setElapsedSeconds(newElapsedSeconds);
+      lastTickRef.current = Date.now();
+    }
+    if (startTimer && timerState === "IDLE") {
+      setTimerState("FOCUS");
+      soundManager.playClockIn();
+      setAchievements((prev) => ({ ...prev, first_clock_in: true }));
+    }
+  };
+
   // Pause Action
   const handlePause = () => {
     setTimerState("PAUSED");
@@ -311,7 +339,7 @@ export default function App() {
     // so the celebration modal and stats are fully displayed at 395x400!
     handleSetViewMode("normal");
 
-    const nowStr = new Date().toLocaleTimeString("ko-KR", { hour12: false });
+    const nowStr = formatTo12Hour(new Date());
     const workedMins = Math.round(elapsedSeconds / 60);
 
     // Update weekly worked data
@@ -694,10 +722,21 @@ export default function App() {
 
             {/* Quick Daily Target Summary info */}
             <div className="mt-1 text-[9.5px] text-slate-400 flex items-center gap-1.5">
-              <span>
-                출근 시각:{" "}
-                <strong className="text-slate-600 dark:text-slate-300 font-medium">{clockInTime || "미등록"}</strong>
-              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playClick();
+                  setActiveModal("clockInEdit");
+                }}
+                className="hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1 group transition-colors cursor-pointer"
+                title="클릭하여 출근 시각 직접 변경 및 등록"
+              >
+                <span>출근 시각:</span>
+                <strong className="text-slate-600 dark:text-slate-300 font-medium group-hover:underline">
+                  {clockInTime ? formatTo12Hour(clockInTime) : "미등록"}
+                </strong>
+                <Edit2 size={9.5} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
+              </button>
               <span>•</span>
               <span>
                 목표: <strong className="text-slate-600 dark:text-slate-300 font-medium">{targetHoursToday}시간</strong>
@@ -740,6 +779,17 @@ export default function App() {
       {/* General Settings Modal */}
       {activeModal === "settings" && (
         <SettingsModal settings={settings} setSettings={setSettings} onClose={() => setActiveModal(null)} />
+      )}
+
+      {/* Clock-In Time Edit Modal */}
+      {activeModal === "clockInEdit" && (
+        <ClockInEditModal
+          currentClockInTime={clockInTime}
+          elapsedSeconds={elapsedSeconds}
+          timerState={timerState}
+          onSave={handleSaveClockInTime}
+          onClose={() => setActiveModal(null)}
+        />
       )}
 
       {/* Celebration Summary Modal */}

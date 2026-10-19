@@ -35,8 +35,14 @@
     "mac": {
       "icon": "build/icon.png",
       "target": [
-        "dmg",
-        "zip"
+        {
+          "target": "dmg",
+          "arch": ["universal", "arm64", "x64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["universal"]
+        }
       ],
       "category": "public.app-category.productivity",
       "hardenedRuntime": false,
