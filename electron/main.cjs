@@ -207,8 +207,8 @@ function setWidgetMode(mode) {
     const miniY = workY + workHeight - miniHeight - 20;
 
     mainWindow.setBounds({
-      x: miniX,
-      y: miniY,
+      x: Math.round(miniX),
+      y: Math.round(miniY),
       width: miniWidth,
       height: miniHeight,
     });
@@ -216,16 +216,28 @@ function setWidgetMode(mode) {
     // Restore normal widget mode
     const normW = 395;
     const normH = 400;
-    const restoredX = Math.max(workX + 20, Math.min(normalBounds.x, workX + workWidth - normW - 20));
-    const restoredY = Math.max(workY + 20, Math.min(normalBounds.y, workY + workHeight - normH - 20));
+
+    const curBounds = mainWindow.getBounds();
+    const rawTargetX = (normalBounds && typeof normalBounds.x === 'number' && !isNaN(normalBounds.x))
+      ? normalBounds.x
+      : Math.round(workX + workWidth - normW - 20);
+    const rawTargetY = (normalBounds && typeof normalBounds.y === 'number' && !isNaN(normalBounds.y))
+      ? normalBounds.y
+      : Math.round((workHeight - normH) / 2);
+
+    const restoredX = Math.max(workX + 10, Math.min(rawTargetX, workX + workWidth - normW - 10));
+    const restoredY = Math.max(workY + 10, Math.min(rawTargetY, workY + workHeight - normH - 10));
 
     mainWindow.setBounds({
-      x: restoredX,
-      y: restoredY,
+      x: Math.round(restoredX),
+      y: Math.round(restoredY),
       width: normW,
       height: normH,
     });
   }
+
+  // Notify renderer of mode change
+  mainWindow.webContents.send('widget:mode-changed', mode);
 }
 
 // IPC Handlers

@@ -101,11 +101,7 @@ export default function App() {
         return JSON.parse(saved);
       } catch {}
     }
-    return [
-      { id: "1", text: "오전 주간 업무 리포트 작성", completed: false, createdAt: new Date().toISOString() },
-      { id: "2", text: "디자인 시스템 컴포넌트 리뷰", completed: true, createdAt: new Date().toISOString() },
-      { id: "3", text: "팀 싱크업 미팅 참석하기", completed: false, createdAt: new Date().toISOString() },
-    ];
+    return [{ id: "", text: "", completed: false, createdAt: new Date().toISOString() }];
   });
 
   // 4. Weekly Stats (minutes worked)
@@ -179,6 +175,7 @@ export default function App() {
   const lastTickRef = useRef(Date.now());
   const timerStateRef = useRef(timerState);
   timerStateRef.current = timerState;
+  const hasTriggeredAutoClockOutRef = useRef(false);
 
   const todayKey = getTodayKey();
   const targetHoursToday = settings.weekdayHours[todayKey] ?? 8;
@@ -296,7 +293,14 @@ export default function App() {
   // Clock In Action
   const handleClockIn = () => {
     const nowStr = formatTo12Hour(new Date());
-    if (!clockInTime) {
+
+    // If clocking in again after completing today's work, start a new session / reset
+    if (timerState === "COMPLETED") {
+      setElapsedSeconds(0);
+      setClockInTime(nowStr);
+      setHasTriggered5MinAlert(false);
+      hasTriggeredAutoClockOutRef.current = false;
+    } else if (!clockInTime) {
       setClockInTime(nowStr);
     }
 
@@ -319,8 +323,12 @@ export default function App() {
     if (typeof newElapsedSeconds === "number") {
       setElapsedSeconds(newElapsedSeconds);
       lastTickRef.current = Date.now();
+      if (totalTargetSeconds - newElapsedSeconds > 0) {
+        hasTriggeredAutoClockOutRef.current = false;
+        setHasTriggered5MinAlert(false);
+      }
     }
-    if (startTimer && timerState === "IDLE") {
+    if (startTimer && (timerState === "IDLE" || timerState === "COMPLETED")) {
       setTimerState("FOCUS");
       soundManager.playClockIn();
       setAchievements((prev) => ({ ...prev, first_clock_in: true }));
@@ -335,6 +343,8 @@ export default function App() {
 
   // Clock Out Action (Manual or Automatic)
   const handleClockOut = (isAuto = false) => {
+    hasTriggeredAutoClockOutRef.current = true;
+
     // If currently in mini mode, automatically restore to normal widget mode
     // so the celebration modal and stats are fully displayed at 395x400!
     handleSetViewMode("normal");
@@ -459,8 +469,9 @@ export default function App() {
             sendOSNotification("🔔 퇴근 5분 전입니다!", "슬슬 마무리 준비를 시작하세요 🏃💨");
           }
 
-          // 2. Automatic Clock-out when remaining reaches 0
-          if (remaining <= 0) {
+          // 2. Automatic Clock-out when remaining reaches 0 (triggers once)
+          if (remaining <= 0 && !hasTriggeredAutoClockOutRef.current) {
+            hasTriggeredAutoClockOutRef.current = true;
             setTimeout(() => handleClockOut(true), 0);
           }
 
@@ -473,7 +484,8 @@ export default function App() {
             const next = prev - deltaSec;
             if (next <= 0) {
               // Work cycle finished!
-              if (currentCycle >= settings.pomodoroTotalCycles) {
+              if (currentCycle >= settings.pomodoroTotalCycles && !hasTriggeredAutoClockOutRef.current) {
+                hasTriggeredAutoClockOutRef.current = true;
                 // Rule: "마지막 집중 주기가 끝나는 순간 휴식 단계로 넘어가지 않고 즉시 종료."
                 setTimeout(() => handleClockOut(true), 0);
                 return 0;
@@ -516,6 +528,13 @@ export default function App() {
     settings.pomodoroBreakMinutes,
     settings.pomodoroWorkMinutes,
   ]);
+
+  // Force expand to normal view whenever celebration modal opens
+  useEffect(() => {
+    if (celebrationModalVisible && viewMode === "mini") {
+      handleSetViewMode("normal");
+    }
+  }, [celebrationModalVisible, viewMode]);
 
   // Mini mode bar view
   if (viewMode === "mini") {
