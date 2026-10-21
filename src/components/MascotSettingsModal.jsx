@@ -382,7 +382,7 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
                   <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-2xs space-y-1.5 mt-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-[10.5px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                        🐾 6x6 스프라이트 예시 (아기 강아지)
+                        🎀 6x6 스프라이트 예시 (아기 고양이)
                       </span>
                       <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-100 dark:border-indigo-900/40">
                         샘플 제공
@@ -399,7 +399,7 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
                       >
                         <img
                           src="./sample-spritesheet.png"
-                          alt="강아지 6x6 스프라이트 예시"
+                          alt="고양이 6x6 스프라이트 예시"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
                         <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
@@ -416,7 +416,7 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
                           {/* Download Button */}
                           <a
                             href="./sample-spritesheet.png"
-                            download="sample-puppy-spritesheet.png"
+                            download="sample-kitty-spritesheet.png"
                             className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center gap-1 transition-colors border border-slate-200 dark:border-slate-600 shadow-2xs"
                             title="예시 스프라이트 시트 다운로드"
                           >
@@ -539,7 +539,7 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 max-w-[340px] w-full border border-slate-200 dark:border-slate-700 shadow-xl flex flex-col space-y-2">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
               <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1">
-                🐾 6x6 스프라이트 시트 구조
+                🎀 6x6 스프라이트 시트 구조
               </span>
               <button
                 onClick={() => setShowSamplePreviewModal(false)}
@@ -552,24 +552,24 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
             <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
               <img
                 src="./sample-spritesheet.png"
-                alt="강아지 스프라이트 시트 전체 구조"
+                alt="고양이 스프라이트 시트 전체 구조"
                 className="w-full h-auto object-contain"
               />
             </div>
 
             <div className="text-[9.5px] text-slate-500 dark:text-slate-400 space-y-0.5 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl">
               <div><strong>1행:</strong> 1단계 - 알 부화 (0~15%)</div>
-              <div><strong>2행:</strong> 2단계 - 아기 강아지 (15~35%)</div>
-              <div><strong>3행:</strong> 3단계 - 성장기 (35~60%)</div>
-              <div><strong>4행:</strong> 4단계 - 열일 직장인 (60~85%)</div>
-              <div><strong>5행:</strong> 5단계 - 프로 마스터 (85~99%)</div>
+              <div><strong>2행:</strong> 2단계 - 아기 고양이 (15~35%)</div>
+              <div><strong>3행:</strong> 3단계 - 성장기 고양이 (35~60%)</div>
+              <div><strong>4행:</strong> 4단계 - 열일 직장인 고양이 (60~85%)</div>
+              <div><strong>5행:</strong> 5단계 - 만세 프로 마스터 (85~99%)</div>
               <div><strong>6행:</strong> 6단계 - 퇴근 완료 파티 (100%)</div>
             </div>
 
             <div className="flex justify-end gap-1.5 pt-1">
               <a
                 href="./sample-spritesheet.png"
-                download="sample-puppy-spritesheet.png"
+                download="sample-kitty-spritesheet.png"
                 className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 flex items-center gap-1"
               >
                 <Download size={12} />

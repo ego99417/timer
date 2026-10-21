@@ -101,7 +101,7 @@ export default function App() {
         return JSON.parse(saved);
       } catch {}
     }
-    return [{ id: "", text: "", completed: false, createdAt: new Date().toISOString() }];
+    return [];
   });
 
   // 4. Weekly Stats (minutes worked)
