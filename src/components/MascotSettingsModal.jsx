@@ -9,6 +9,9 @@ import {
   Sparkle,
   Film,
   Info,
+  Download,
+  Eye,
+  X,
 } from 'lucide-react';
 import MascotDisplay from './MascotDisplay';
 import { soundManager } from '../utils/audio';
@@ -49,6 +52,7 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
   const [growthInputType, setGrowthInputType] = useState(
     growthData.spriteSheetUrl ? 'sprite' : 'individual'
   );
+  const [showSamplePreviewModal, setShowSamplePreviewModal] = useState(false);
 
   const stateLabels = {
     FOCUS: { name: '집중 (근무 중)', desc: '열심히 업무에 집중할 때 표시됩니다.' },
@@ -373,6 +377,83 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
                       </button>
                     )}
                   </div>
+
+                  {/* Sample Sprite Sheet Reference Card & Download */}
+                  <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-2xs space-y-1.5 mt-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10.5px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                        🐾 6x6 스프라이트 예시 (아기 강아지)
+                      </span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-100 dark:border-indigo-900/40">
+                        샘플 제공
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2 items-center">
+                      {/* Clickable Thumbnail */}
+                      <button
+                        type="button"
+                        onClick={() => setShowSamplePreviewModal(true)}
+                        className="w-13 h-13 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:ring-2 hover:ring-pink-400 transition-all shrink-0 relative group bg-slate-100 dark:bg-slate-700"
+                        title="클릭하여 예시 이미지 크게 보기"
+                      >
+                        <img
+                          src="./sample-spritesheet.png"
+                          alt="강아지 6x6 스프라이트 예시"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <Eye size={12} />
+                        </div>
+                      </button>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9.5px] text-slate-500 dark:text-slate-400 leading-tight">
+                          1~6행이 각 성장 단계(알 부화부터 퇴근 완료까지)로 구성된 6x6 예시입니다. 다운로드하여 직접 커스텀하거나 바로 적용해보세요!
+                        </p>
+
+                        <div className="flex gap-1.5 mt-1.5">
+                          {/* Download Button */}
+                          <a
+                            href="./sample-spritesheet.png"
+                            download="sample-puppy-spritesheet.png"
+                            className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center gap-1 transition-colors border border-slate-200 dark:border-slate-600 shadow-2xs"
+                            title="예시 스프라이트 시트 다운로드"
+                          >
+                            <Download size={10} />
+                            <span>다운로드</span>
+                          </a>
+
+                          {/* Try Sample Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              soundManager.playClick();
+                              setGrowthData((prev) => ({
+                                ...prev,
+                                spriteSheetUrl: './sample-spritesheet.png',
+                                spriteRows: 6,
+                                spriteCols: 6,
+                              }));
+                              setGrowthInputType('sprite');
+                            }}
+                            className={`px-2 py-0.5 text-[10px] font-semibold rounded-md transition-all flex items-center gap-1 ${
+                              growthData.spriteSheetUrl === './sample-spritesheet.png'
+                                ? 'bg-emerald-500 text-white shadow-2xs'
+                                : 'bg-pink-50 dark:bg-pink-950/50 hover:bg-pink-100 text-pink-600 dark:text-pink-300 border border-pink-200 dark:border-pink-900/50'
+                            }`}
+                          >
+                            <Sparkles size={10} />
+                            <span>
+                              {growthData.spriteSheetUrl === './sample-spritesheet.png'
+                                ? '예시 적용 중'
+                                : '예시 바로 적용'}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -451,6 +532,70 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
           </button>
         </div>
       </div>
+
+      {/* Sample Sprite Sheet Full Preview Modal */}
+      {showSamplePreviewModal && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 max-w-[340px] w-full border border-slate-200 dark:border-slate-700 shadow-xl flex flex-col space-y-2">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1">
+                🐾 6x6 스프라이트 시트 구조
+              </span>
+              <button
+                onClick={() => setShowSamplePreviewModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+              <img
+                src="./sample-spritesheet.png"
+                alt="강아지 스프라이트 시트 전체 구조"
+                className="w-full h-auto object-contain"
+              />
+            </div>
+
+            <div className="text-[9.5px] text-slate-500 dark:text-slate-400 space-y-0.5 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl">
+              <div><strong>1행:</strong> 1단계 - 알 부화 (0~15%)</div>
+              <div><strong>2행:</strong> 2단계 - 아기 강아지 (15~35%)</div>
+              <div><strong>3행:</strong> 3단계 - 성장기 (35~60%)</div>
+              <div><strong>4행:</strong> 4단계 - 열일 직장인 (60~85%)</div>
+              <div><strong>5행:</strong> 5단계 - 프로 마스터 (85~99%)</div>
+              <div><strong>6행:</strong> 6단계 - 퇴근 완료 파티 (100%)</div>
+            </div>
+
+            <div className="flex justify-end gap-1.5 pt-1">
+              <a
+                href="./sample-spritesheet.png"
+                download="sample-puppy-spritesheet.png"
+                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 flex items-center gap-1"
+              >
+                <Download size={12} />
+                <span>다운로드</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playClick();
+                  setGrowthData((prev) => ({
+                    ...prev,
+                    spriteSheetUrl: './sample-spritesheet.png',
+                    spriteRows: 6,
+                    spriteCols: 6,
+                  }));
+                  setShowSamplePreviewModal(false);
+                }}
+                className="px-3 py-1.5 text-xs font-bold bg-pink-500 hover:bg-pink-600 text-white rounded-lg flex items-center gap-1 shadow-sm"
+              >
+                <Sparkles size={12} />
+                <span>이 예시 바로 적용</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
