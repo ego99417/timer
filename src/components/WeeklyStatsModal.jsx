@@ -8,9 +8,9 @@
  */
 
 import React from 'react';
-import { BarChart3, TrendingUp, Calendar, Clock, CheckCircle } from 'lucide-react';
+import { BarChart3, TrendingUp, Calendar, Clock, CheckCircle, RotateCcw } from 'lucide-react';
 
-export default function WeeklyStatsModal({ weeklyData, weekdayHours, onClose }) {
+export default function WeeklyStatsModal({ weeklyData, weekdayHours, onReset, onClose }) {
   const days = [
     { key: 'mon', label: '월' },
     { key: 'tue', label: '화' },
@@ -32,6 +32,12 @@ export default function WeeklyStatsModal({ weeklyData, weekdayHours, onClose }) 
   };
 
   const weeklyRate = totalTargetMinutes > 0 ? Math.min(100, Math.round((totalWorkedMinutes / totalTargetMinutes) * 100)) : 0;
+
+  const handleReset = () => {
+    if (window.confirm('이번 주 근무 기록을 모두 0분으로 초기화할까요?')) {
+      if (onReset) onReset();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 bg-black/40 dark:bg-black/60 rounded-[28px] overflow-hidden animate-fadeIn">
@@ -131,10 +137,20 @@ export default function WeeklyStatsModal({ weeklyData, weekdayHours, onClose }) 
           </div>
         </div>
 
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 px-1">
           <p className="text-[10px] text-slate-400">
             📊 요일별 근무 기록은 로컬에 안전하게 보관됩니다.
           </p>
+          {onReset && (
+            <button
+              onClick={handleReset}
+              className="text-[10px] text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950/40"
+              title="이번 주 기록 0분으로 초기화"
+            >
+              <RotateCcw size={10} />
+              <span>초기화</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

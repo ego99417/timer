@@ -124,7 +124,7 @@ export default function App() {
         return JSON.parse(saved);
       } catch {}
     }
-    return { mon: 480, tue: 460, wed: 120, thu: 0, fri: 0, sat: 0, sun: 0 };
+    return { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 };
   });
 
   // 5. Achievements
@@ -136,10 +136,10 @@ export default function App() {
       } catch {}
     }
     return {
-      first_clock_in: true,
+      first_clock_in: false,
       punctual_king: false,
       lunch_enjoyer: false,
-      completedTodosCount: 1,
+      completedTodosCount: 0,
       deep_focus: false,
       weekly_champion: false,
     };
@@ -803,6 +803,7 @@ export default function App() {
         <WeeklyStatsModal
           weeklyData={weeklyData}
           weekdayHours={settings.weekdayHours}
+          onReset={() => setWeeklyData({ mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 })}
           onClose={() => setActiveModal(null)}
         />
       )}
