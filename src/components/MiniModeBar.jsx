@@ -1,3 +1,12 @@
+/**
+ * @file src/components/MiniModeBar.jsx
+ * @description 초소형 미니 플로팅 바 컴포넌트
+ * 
+ * [주요 역할]
+ * - 모니터 구석에 상주하는 콤팩트 가로 바(290x64) 뷰
+ * - 미니 캐릭터 애니메이션, 남은 시간, 재생/일시정지/퇴근 버튼만 간결하게 표시
+ */
+
 import React from 'react';
 import { Play, Pause, Square, Maximize2, Coffee } from 'lucide-react';
 import MascotDisplay from './MascotDisplay';

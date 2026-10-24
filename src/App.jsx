@@ -1,3 +1,15 @@
+/**
+ * @file src/App.jsx
+ * @description FluffyWork 타이머의 핵심 상태 관리 및 메인 화면 제어 컴포넌트
+ * 
+ * [주요 역할]
+ * 1. 5가지 타이머 상태(IDLE 대기, RUNNING 근무, REST 점심/휴식, PAUSED 일시정지, COMPLETED 퇴근완료) 관리
+ * 2. 1초마다 남은 시간 계산 및 점심시간 자동 감지/휴식 모드 전환
+ * 3. 출근 시각 기록 및 퇴근 5분 전 사전 알림, 퇴근 시간 자동 종료 연출
+ * 4. 요일별 목표 시간, 점심시간, 투두리스트, 업적 데이터의 localStorage 영구 저장
+ * 5. 다크 모드, 사운드 음소거, 미니 플로팅 바 모드 및 각종 모달 팝업 상태 제어
+ */
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   Play,

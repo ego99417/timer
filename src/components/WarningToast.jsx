@@ -1,3 +1,11 @@
+/**
+ * @file src/components/WarningToast.jsx
+ * @description 퇴근 5분 전 사전 알림 토스트 팝업
+ * 
+ * [주요 역할]
+ * - 퇴근 5분 전에 "퇴근 5분 전입니다! 슬슬 마무리 준비를 시작하세요" 안내창 표출
+ */
+
 import React from 'react';
 import { Bell, X, Sparkles } from 'lucide-react';
 import { soundManager } from '../utils/audio';

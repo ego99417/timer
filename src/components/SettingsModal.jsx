@@ -1,3 +1,13 @@
+/**
+ * @file src/components/SettingsModal.jsx
+ * @description 타이머 및 근무시간 환경설정 모달
+ * 
+ * [주요 역할]
+ * - 월~일 요일별 목표 근무 시간(선택적 근로시간제 맞춤) 설정
+ * - 점심시간(자동 휴식 연동) 시작/종료 시각 설정
+ * - 퇴근 5분 전 사전 알림 및 음소거 설정
+ */
+
 import React, { useState } from 'react';
 import {
   Settings,

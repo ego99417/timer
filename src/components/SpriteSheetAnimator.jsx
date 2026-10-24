@@ -1,3 +1,11 @@
+/**
+ * @file src/components/SpriteSheetAnimator.jsx
+ * @description 스프라이트 시트 애니메이션 렌더러 컴포넌트
+ * 
+ * [주요 역할]
+ * - 행/열(N x M) 격자 형태의 스프라이트 이미지 시트를 CSS background-position을 이용해 프레임별로 연속 재생
+ */
+
 import React, { useState, useEffect } from 'react';
 
 /**

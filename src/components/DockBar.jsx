@@ -1,3 +1,12 @@
+/**
+ * @file src/components/DockBar.jsx
+ * @description 사이드 퀵 도크(Dock) 네비게이션 바
+ * 
+ * [주요 역할]
+ * - 타이머, 캐릭터 커스텀, Todo, 업적, 주간 통계 모달을 여는 원클릭 아이콘 버튼 제공
+ * - 뱃지 카운트(Todo 남은 개수 등) 표시 및 다크모드/미니모드 토글 버튼 배치
+ */
+
 import React from 'react';
 import {
   Clock,

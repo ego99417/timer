@@ -1,3 +1,13 @@
+/**
+ * @file src/components/CircularTimer.jsx
+ * @description 원형 프로그레스 바 타이머 컴포넌트
+ * 
+ * [주요 역할]
+ * - SVG 원형 링(Circle Ring)을 통해 목표 시간 대비 근무 진행률(%) 시각화
+ * - 중앙에 마스코트 캐릭터(MascotDisplay)를 품고 있는 메인 비주얼 영역
+ * - 남은 시간 및 퇴근 예정 시각 텍스트 렌더링
+ */
+
 import React from 'react';
 import MascotDisplay from './MascotDisplay';
 import { soundManager } from '../utils/audio';

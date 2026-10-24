@@ -1,3 +1,12 @@
+/**
+ * @file src/components/MascotSettingsModal.jsx
+ * @description 마스코트 캐릭터 커스텀 설정 모달
+ * 
+ * [주요 역할]
+ * - 기본 다람쥐 캐릭터 대신 사용자 PC의 사진(JPG, PNG, GIF, WebP) 또는 외부 이미지 URL 등록
+ * - 상태별(집중, 휴식, 일시정지, 완료) 개별 이미지 매핑 및 스프라이트 시트 설정
+ */
+
 import React, { useState } from 'react';
 import {
   Image,

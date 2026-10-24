@@ -1,3 +1,13 @@
+/**
+ * @file src/components/ClockInEditModal.jsx
+ * @description 출근 시각 직접 변경 모달 컴포넌트
+ * 
+ * [주요 역할]
+ * - 출근 버튼을 늦게 눌렀을 때 실제 출근 시각(오전/오후 H:MM)을 직접 지정
+ * - '지금', '10분 전', '30분 전' 등 빠른 프리셋 버튼 제공
+ * - 변경된 시각에 맞춰 누적 근무 시간(경과 시간)을 자동 재계산하여 동기화
+ */
+
 import React, { useState, useMemo } from 'react';
 import { Clock, Check, X, Sparkles, RotateCcw } from 'lucide-react';
 import { formatTo12Hour, parse12HourTime } from '../utils/timeFormat';

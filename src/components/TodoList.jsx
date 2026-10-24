@@ -1,3 +1,12 @@
+/**
+ * @file src/components/TodoList.jsx
+ * @description 당일 업무 할 일(Todo) 관리 컴포넌트
+ * 
+ * [주요 역할]
+ * - 간단한 업무 체크리스트 추가, 완료 토글, 삭제
+ * - 전체/진행중/완료 필터링 및 localStorage 연동
+ */
+
 import React, { useState } from 'react';
 import { Plus, Trash2, CheckCircle2, Circle, ListTodo } from 'lucide-react';
 import { soundManager } from '../utils/audio';

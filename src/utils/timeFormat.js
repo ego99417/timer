@@ -1,4 +1,14 @@
 /**
+ * @file src/utils/timeFormat.js
+ * @description 시간 및 날짜 포맷 변환 유틸리티 함수 모음
+ * 
+ * [주요 역할]
+ * - 초(seconds)를 "HH:MM:SS" 또는 "M시간 S분" 형태로 가공
+ * - 24시간제(09:30)와 한국어 12시간제(오전 9:30) 상호 변환 및 파싱
+ * - 출근 시간 수정 모달 및 타이머 게이지 계산에 활용
+ */
+
+/**
  * Formats a Date or time string into Korean 12-hour format: "오전/오후 H:MM"
  * Examples:
  * - 09:30:00 -> "오전 9:30"

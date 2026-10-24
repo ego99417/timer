@@ -1,3 +1,13 @@
+/**
+ * @file src/utils/audio.js
+ * @description Web Audio API 기반 오프라인 사운드 매니저
+ * 
+ * [주요 역할]
+ * - 외부 mp3 파일 없이 브라우저 내장 Web Audio API 주파수 합성으로 효과음 재생
+ * - 버튼 클릭음(Click), 퇴근 5분 전 알림 차임벨(Chime), 퇴근 완료 팡파르(Fanfare)
+ * - 음소거(Mute) 상태 제어
+ */
+
 // Web Audio API Synthesizer for offline chime sound effects
 
 class SoundManager {

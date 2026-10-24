@@ -1,3 +1,16 @@
+/**
+ * @file electron/main.cjs
+ * @description Electron 데스크톱 앱의 메인(백엔드) 프로세스 파일
+ * 
+ * [주요 역할]
+ * 1. 프레임리스(frameless) & 투명(transparent) 배경의 데스크톱 위젯 창 생성
+ * 2. 화면 최상단 상주(Always on Top) 및 macOS 가상 데스크톱(Spaces) 추적 고정
+ * 3. 백그라운드 스로틀링 해제(backgroundThrottling: false)로 정확한 1초 타이머 보장
+ * 4. 작업표시줄/메뉴바 시스템 트레이(Tray) 아이콘 및 우클릭 메뉴 관리
+ * 5. 일반 위젯 뷰 ↔ 미니 플로팅 바 모드 간의 창 크기 및 화면 좌표 전환
+ * 6. React 렌더러와의 IPC 통신 처리 (창 닫기, 최소화, 모드 변경 등)
+ */
+
 const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 

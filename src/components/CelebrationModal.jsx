@@ -1,3 +1,12 @@
+/**
+ * @file src/components/CelebrationModal.jsx
+ * @description 퇴근 달성 축하 팝업 모달
+ * 
+ * [주요 역할]
+ * - 퇴근 시간 도달 시 canvas-confetti 화려한 폭죽 애니메이션 발사
+ * - 축하 팡파르 사운드 재생 및 오늘의 최종 근무 결과 요약 표시
+ */
+
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Sparkles, CheckCircle2, Clock, Calendar, Heart, X } from 'lucide-react';

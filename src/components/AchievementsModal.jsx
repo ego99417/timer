@@ -1,3 +1,12 @@
+/**
+ * @file src/components/AchievementsModal.jsx
+ * @description 업적 및 뱃지 보상 모달
+ * 
+ * [주요 역할]
+ * - 첫 출근, 칼퇴 요정, 완벽한 주간 등 사용자의 출퇴근 달성 과제 목록 표시
+ * - 잠금 해제된 뱃지와 진행 중인 뱃지 시각화
+ */
+
 import React from 'react';
 import { Award, CheckCircle, Lock, Sparkles, Star } from 'lucide-react';
 

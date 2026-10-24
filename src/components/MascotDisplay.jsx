@@ -1,3 +1,12 @@
+/**
+ * @file src/components/MascotDisplay.jsx
+ * @description 마스코트 캐릭터 '뽀송이' 및 사용자 커스텀 이미지 렌더링 컴포넌트
+ * 
+ * [주요 역할]
+ * - 근무 상태(FOCUS 열일, REST 점심 식사, PAUSED 수면/낮잠, COMPLETED 퇴근 축하)에 맞는 SVG 일러스트 렌더링
+ * - 사용자가 업로드한 커스텀 이미지/GIF 및 스프라이트 애니메이션 표출
+ */
+
 import React, { useState } from 'react';
 import SpriteSheetAnimator from './SpriteSheetAnimator';
 

@@ -1,3 +1,12 @@
+/**
+ * @file src/components/WeeklyStatsModal.jsx
+ * @description 주간 근무 통계 모달
+ * 
+ * [주요 역할]
+ * - 월~일 요일별 실제 근무 시간과 목표 시간 시각화 (막대 차트)
+ * - 이번 주 총 근무 시간 및 주간 목표 달성률 계산
+ */
+
 import React from 'react';
 import { BarChart3, TrendingUp, Calendar, Clock, CheckCircle } from 'lucide-react';
 
