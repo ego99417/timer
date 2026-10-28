@@ -10,13 +10,14 @@
 
 import React, { useState, useMemo } from 'react';
 import { Clock, Check, X, Sparkles, RotateCcw } from 'lucide-react';
-import { formatTo12Hour, parse12HourTime } from '../utils/timeFormat';
+import { formatTo12Hour, parse12HourTime, calculateWorkedSecondsWithLunch } from '../utils/timeFormat';
 import { soundManager } from '../utils/audio';
 
 export default function ClockInEditModal({
   currentClockInTime,
   elapsedSeconds,
   timerState,
+  settings,
   onSave,
   onClose,
 }) {
@@ -44,12 +45,15 @@ export default function ClockInEditModal({
     return `${period} ${hour}:${displayMins}`;
   }, [period, hour, minute]);
 
-  // Calculate estimated elapsed seconds based on chosen clock-in time
-  const calculatedElapsedSec = useMemo(() => {
+  // Calculate estimated net elapsed seconds based on chosen clock-in time (deducting lunch break)
+  const { netWorkedSeconds: calculatedElapsedSec, lunchDeductedSeconds } = useMemo(() => {
     const now = new Date();
-    const diffSec = Math.round((now.getTime() - selectedDate.getTime()) / 1000);
-    return Math.max(0, diffSec);
-  }, [selectedDate]);
+    return calculateWorkedSecondsWithLunch(selectedDate, now, {
+      autoLunchBreak: settings?.autoLunchBreak ?? true,
+      lunchStart: settings?.lunchStart || '12:00',
+      lunchEnd: settings?.lunchEnd || '13:00',
+    });
+  }, [selectedDate, settings]);
 
   const formattedCalculatedTime = useMemo(() => {
     const h = Math.floor(calculatedElapsedSec / 3600);
@@ -57,6 +61,17 @@ export default function ClockInEditModal({
     if (h > 0) return `${h}시간 ${m}분`;
     return `${m}분`;
   }, [calculatedElapsedSec]);
+
+  const formattedLunchDeducted = useMemo(() => {
+    if (!lunchDeductedSeconds || lunchDeductedSeconds <= 0) return null;
+    const m = Math.round(lunchDeductedSeconds / 60);
+    if (m >= 60) {
+      const h = Math.floor(m / 60);
+      const remM = m % 60;
+      return remM > 0 ? `${h}시간 ${remM}분` : `${h}시간`;
+    }
+    return `${m}분`;
+  }, [lunchDeductedSeconds]);
 
   // Quick Preset Actions
   const applyPreset = (presetPeriod, presetH12, presetM) => {
@@ -260,7 +275,12 @@ export default function ClockInEditModal({
 
             {syncElapsed && (
               <div className="p-2 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 text-[10px] text-indigo-700 dark:text-indigo-300 leading-tight">
-                💡 변경 시 현재까지 근무한 시간이 <strong>{formattedCalculatedTime}</strong>(으)로 조정됩니다.
+                💡 변경 시 현재까지 순수 근무 시간이 <strong>{formattedCalculatedTime}</strong>(으)로 조정됩니다.
+                {formattedLunchDeducted && (
+                  <span className="block mt-0.5 text-[9.5px] text-amber-600 dark:text-amber-400 font-semibold">
+                    🍽️ 점심시간 {formattedLunchDeducted} 자동 제외 완료
+                  </span>
+                )}
               </div>
             )}
 

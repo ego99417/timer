@@ -46,7 +46,13 @@ import CelebrationModal from "./components/CelebrationModal";
 import WarningToast from "./components/WarningToast";
 import ClockInEditModal from "./components/ClockInEditModal";
 import { soundManager } from "./utils/audio";
-import { formatTo12Hour } from "./utils/timeFormat";
+import { formatTo12Hour, parse12HourTime, calculateWorkedSecondsWithLunch } from "./utils/timeFormat";
+
+// Helper to get today's date formatted as YYYY-MM-DD
+const getTodayDateStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 // Helper to get today's key: mon, tue, wed, thu, fri, sat, sun
 const getTodayKey = () => {
@@ -163,10 +169,26 @@ export default function App() {
     }
   }, []);
 
-  // 7. Timer Runtime State
-  const [timerState, setTimerState] = useState("IDLE"); // 'IDLE' | 'FOCUS' | 'REST' | 'PAUSED' | 'COMPLETED'
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // 7. Timer Runtime State (Date-aware persistence)
+  const [timerState, setTimerState] = useState(() => {
+    const todayDateStr = getTodayDateStr();
+    const savedWorkDate = localStorage.getItem("fluffy_work_date");
+    if (savedWorkDate !== todayDateStr) return "IDLE";
+    const saved = localStorage.getItem("fluffy_timer_state");
+    if (saved === "FOCUS" || saved === "REST") return "PAUSED";
+    return saved || "IDLE";
+  });
+  const [elapsedSeconds, setElapsedSeconds] = useState(() => {
+    const todayDateStr = getTodayDateStr();
+    const savedWorkDate = localStorage.getItem("fluffy_work_date");
+    if (savedWorkDate !== todayDateStr) return 0;
+    const saved = localStorage.getItem("fluffy_elapsed_seconds");
+    return saved ? Math.max(0, parseInt(saved, 10) || 0) : 0;
+  });
   const [clockInTime, setClockInTime] = useState(() => {
+    const todayDateStr = getTodayDateStr();
+    const savedWorkDate = localStorage.getItem("fluffy_work_date");
+    if (savedWorkDate !== todayDateStr) return null;
     const saved = localStorage.getItem("fluffy_clock_in_time");
     return saved ? formatTo12Hour(saved) : null;
   });
@@ -235,12 +257,23 @@ export default function App() {
   }, [achievements]);
 
   useEffect(() => {
+    localStorage.setItem("fluffy_work_date", getTodayDateStr());
     if (clockInTime) {
       localStorage.setItem("fluffy_clock_in_time", clockInTime);
     } else {
       localStorage.removeItem("fluffy_clock_in_time");
     }
   }, [clockInTime]);
+
+  useEffect(() => {
+    localStorage.setItem("fluffy_work_date", getTodayDateStr());
+    localStorage.setItem("fluffy_elapsed_seconds", String(elapsedSeconds));
+  }, [elapsedSeconds]);
+
+  useEffect(() => {
+    localStorage.setItem("fluffy_work_date", getTodayDateStr());
+    localStorage.setItem("fluffy_timer_state", timerState);
+  }, [timerState]);
 
   // Request notification permission if enabled
   useEffect(() => {
@@ -304,7 +337,8 @@ export default function App() {
 
   // Clock In Action
   const handleClockIn = () => {
-    const nowStr = formatTo12Hour(new Date());
+    const now = new Date();
+    const nowStr = formatTo12Hour(now);
 
     // If clocking in again after completing today's work, start a new session / reset
     if (timerState === "COMPLETED") {
@@ -312,8 +346,30 @@ export default function App() {
       setClockInTime(nowStr);
       setHasTriggered5MinAlert(false);
       hasTriggeredAutoClockOutRef.current = false;
-    } else if (!clockInTime) {
-      setClockInTime(nowStr);
+    } else if (timerState === "IDLE") {
+      // First time starting today
+      if (!clockInTime) {
+        setClockInTime(nowStr);
+        setElapsedSeconds(0);
+      } else {
+        // Clock-in time was pre-configured manually in the edit modal
+        // If elapsedSeconds is 0, auto-sync elapsed time to the difference between clockInTime and now (deducting lunch)
+        if (elapsedSeconds === 0) {
+          const parsed = parse12HourTime(clockInTime);
+          const clockInDate = new Date();
+          clockInDate.setHours(parsed.hours24, parsed.minutes, 0, 0);
+          const { netWorkedSeconds } = calculateWorkedSecondsWithLunch(clockInDate, now, {
+            autoLunchBreak: settings.autoLunchBreak,
+            lunchStart: settings.lunchStart,
+            lunchEnd: settings.lunchEnd,
+          });
+          if (netWorkedSeconds > 0) {
+            setElapsedSeconds(netWorkedSeconds);
+          }
+        }
+      }
+      setHasTriggered5MinAlert(false);
+      hasTriggeredAutoClockOutRef.current = false;
     }
 
     // Check if right now is lunch time
@@ -341,8 +397,13 @@ export default function App() {
       }
     }
     if (startTimer && (timerState === "IDLE" || timerState === "COMPLETED")) {
-      setTimerState("FOCUS");
-      soundManager.playClockIn();
+      if (settings.autoLunchBreak && isCurrentlyLunchTime()) {
+        setTimerState("REST");
+        soundManager.playRestChime();
+      } else {
+        setTimerState("FOCUS");
+        soundManager.playClockIn();
+      }
       setAchievements((prev) => ({ ...prev, first_clock_in: true }));
     }
   };
@@ -479,6 +540,8 @@ export default function App() {
             setWarningToastVisible(true);
             soundManager.playWarningChime();
             sendOSNotification("🔔 퇴근 5분 전입니다!", "슬슬 마무리 준비를 시작하세요 🏃💨");
+            // If currently in mini mode, auto-expand to normal mode so the alert and squirrel mascot are clearly visible!
+            handleSetViewMode("normal");
           }
 
           // 2. Automatic Clock-out when remaining reaches 0 (triggers once)
@@ -582,8 +645,6 @@ export default function App() {
         !isElectron ? "bg-slate-100/90 dark:bg-slate-950 flex items-center justify-center p-2 sm:p-4" : ""
       }`}
     >
-      {/* 5-Min Warning Toast Notification */}
-      {warningToastVisible && <WarningToast onClose={() => setWarningToastVisible(false)} />}
 
       {/* Main Glassmorphic Container (Fits 395x400 on Desktop or mobile card) */}
       <div
@@ -819,6 +880,7 @@ export default function App() {
           currentClockInTime={clockInTime}
           elapsedSeconds={elapsedSeconds}
           timerState={timerState}
+          settings={settings}
           onSave={handleSaveClockInTime}
           onClose={() => setActiveModal(null)}
         />
@@ -836,6 +898,9 @@ export default function App() {
           }}
         />
       )}
+
+      {/* 5-Min Warning Toast Notification (Rendered on top of all modals) */}
+      {warningToastVisible && <WarningToast onClose={() => setWarningToastVisible(false)} />}
     </div>
   );
 }

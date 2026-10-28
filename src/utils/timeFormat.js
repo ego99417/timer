@@ -100,3 +100,60 @@ export function parse12HourTime(timeStr) {
     minutes: mins,
   };
 }
+
+/**
+ * Calculates net worked seconds between clockInDate and now,
+ * automatically deducting lunch break time if autoLunchBreak is enabled.
+ * 
+ * @param {Date} clockInDate - The clock-in Date object
+ * @param {Date} now - Current Date object (defaults to new Date())
+ * @param {Object} lunchSettings - { autoLunchBreak: boolean, lunchStart: "HH:mm", lunchEnd: "HH:mm" }
+ * @returns {{ netWorkedSeconds: number, lunchDeductedSeconds: number }}
+ */
+export function calculateWorkedSecondsWithLunch(clockInDate, now = new Date(), lunchSettings = {}) {
+  if (!clockInDate || isNaN(clockInDate.getTime())) {
+    return { netWorkedSeconds: 0, lunchDeductedSeconds: 0 };
+  }
+
+  const clockInMs = clockInDate.getTime();
+  const nowMs = now.getTime();
+
+  if (nowMs <= clockInMs) {
+    return { netWorkedSeconds: 0, lunchDeductedSeconds: 0 };
+  }
+
+  const rawDiffMs = nowMs - clockInMs;
+  let lunchOverlapMs = 0;
+
+  const { autoLunchBreak, lunchStart, lunchEnd } = lunchSettings;
+
+  if (autoLunchBreak && lunchStart && lunchEnd) {
+    const [startH, startM] = lunchStart.split(":").map(Number);
+    const [endH, endM] = lunchEnd.split(":").map(Number);
+
+    if (!isNaN(startH) && !isNaN(startM) && !isNaN(endH) && !isNaN(endM)) {
+      const lunchStartDate = new Date(now);
+      lunchStartDate.setHours(startH, startM, 0, 0);
+      const lunchEndDate = new Date(now);
+      lunchEndDate.setHours(endH, endM, 0, 0);
+
+      const lunchStartMs = lunchStartDate.getTime();
+      const lunchEndMs = lunchEndDate.getTime();
+
+      if (lunchEndMs > lunchStartMs) {
+        // Overlap between [clockInMs, nowMs] and [lunchStartMs, lunchEndMs]
+        const overlapStart = Math.max(clockInMs, lunchStartMs);
+        const overlapEnd = Math.min(nowMs, lunchEndMs);
+
+        if (overlapEnd > overlapStart) {
+          lunchOverlapMs = overlapEnd - overlapStart;
+        }
+      }
+    }
+  }
+
+  const netWorkedSeconds = Math.max(0, Math.round((rawDiffMs - lunchOverlapMs) / 1000));
+  const lunchDeductedSeconds = Math.round(lunchOverlapMs / 1000);
+
+  return { netWorkedSeconds, lunchDeductedSeconds };
+}

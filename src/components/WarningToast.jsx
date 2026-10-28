@@ -11,15 +11,23 @@ import { Bell, X, Sparkles } from 'lucide-react';
 import { soundManager } from '../utils/audio';
 
 export default function WarningToast({ onClose }) {
+  // Auto-dismiss after 15 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
   return (
-    <div className="fixed top-5 right-5 z-50 max-w-sm w-full animate-bounce-short">
-      <div className="p-3.5 bg-amber-50 dark:bg-amber-950 border border-amber-300 dark:border-amber-700/80 rounded-2xl shadow-md flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md animate-pulse">
-          <Bell size={20} />
+    <div className="fixed top-3 left-3 right-3 z-[100] max-w-[370px] mx-auto animate-bounce-short pointer-events-auto app-no-drag">
+      <div className="p-3 bg-amber-500 text-white dark:bg-amber-600 border border-amber-400 dark:border-amber-500 rounded-2xl shadow-2xl flex items-start gap-2.5 backdrop-blur-md">
+        <div className="w-9 h-9 rounded-xl bg-white/20 text-white flex items-center justify-center shrink-0 shadow-inner animate-pulse">
+          <Bell size={18} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold text-amber-800 dark:text-amber-200 flex items-center gap-1">
+            <span className="text-[11px] font-extrabold tracking-wide text-amber-100 flex items-center gap-1">
               <Sparkles size={12} />
               퇴근 5분 전 알림
             </span>
@@ -28,17 +36,30 @@ export default function WarningToast({ onClose }) {
                 soundManager.playClick();
                 onClose();
               }}
-              className="text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 p-0.5 rounded-md"
+              className="text-white/80 hover:text-white hover:bg-white/20 p-1 rounded-lg transition-colors cursor-pointer"
+              title="닫기"
             >
               <X size={14} />
             </button>
           </div>
-          <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 mt-1">
-            퇴근 5분 전입니다! 🏃💨
+          <p className="text-xs font-bold text-white mt-0.5 leading-snug">
+            퇴근까지 5분 남았습니다! 🏃💨
           </p>
-          <p className="text-[11px] text-amber-700/90 dark:text-amber-300/80 mt-0.5 leading-snug">
+          <p className="text-[10px] text-amber-100 mt-0.5 leading-tight">
             슬슬 업무를 마무리하고 퇴근 준비를 시작하세요.
           </p>
+          <div className="mt-2 flex justify-end">
+            <button
+              onClick={() => {
+                soundManager.playClick();
+                onClose();
+              }}
+              className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <Check size={11} />
+              <span>확인</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
