@@ -169,9 +169,15 @@ export default function SettingsModal({
                   <span>요일별 목표 근무 시간 (시차출퇴근제 / 자율근무)</span>
                   <span className="text-[11px] font-normal text-slate-400">단위: 시간(h)</span>
                 </h4>
-                <p className="text-[11px] text-slate-400 mb-3">
-                  해당 요일에 접속하면 목표 시간이 자동으로 세팅됩니다.
-                </p>
+                <div className="p-2.5 my-2 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-2">
+                  <span className="text-sm shrink-0 leading-none">💡</span>
+                  <div className="text-[10.5px] text-indigo-700 dark:text-indigo-300 leading-snug">
+                    <strong>점심시간(1시간)을 제외한 '순수 근무 시간'</strong>을 입력하세요.<br />
+                    <span className="text-[10px] text-indigo-600/90 dark:text-indigo-400">
+                      (예: 9시~18시 9시간 체류 회사의 경우 <strong>8시간</strong> 입력 ➡️ 점심 1시간은 앱이 자동으로 제외)
+                    </span>
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {days.map((d) => (

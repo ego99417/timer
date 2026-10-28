@@ -26,7 +26,6 @@ export default function ClockInEditModal({
   const [period, setPeriod] = useState(initial.period); // '오전' | '오후'
   const [hour, setHour] = useState(initial.hours12); // 1..12
   const [minute, setMinute] = useState(initial.minutes); // 0..59
-  const [syncElapsed, setSyncElapsed] = useState(true); // whether to auto-recalculate elapsedSeconds
   const [startIfIdle, setStartIfIdle] = useState(timerState === 'IDLE');
 
   // Convert selected (period, hour, minute) to 24-hour Date on today
@@ -97,7 +96,7 @@ export default function ClockInEditModal({
     soundManager.playClick();
     onSave({
       newClockInTime: formatted12h,
-      newElapsedSeconds: syncElapsed ? calculatedElapsedSec : elapsedSeconds,
+      newElapsedSeconds: calculatedElapsedSec,
       startTimer: startIfIdle && timerState === 'IDLE',
     });
     onClose();
@@ -105,7 +104,7 @@ export default function ClockInEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 bg-black/40 dark:bg-black/60 rounded-[28px] overflow-hidden animate-fadeIn">
-      <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-2xl p-3.5 shadow-md border border-slate-200/90 dark:border-slate-700/80 flex flex-col overflow-hidden">
+      <div className="w-full max-w-[345px] max-h-[375px] bg-white dark:bg-slate-900 rounded-2xl p-3 shadow-md border border-slate-200/90 dark:border-slate-700/80 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-1.5">
@@ -125,8 +124,8 @@ export default function ClockInEditModal({
           </button>
         </div>
 
-        {/* Time Selection Controls */}
-        <div className="py-2.5 space-y-2.5">
+        {/* Time Selection Controls (Scrollable if screen scaling is high) */}
+        <div className="flex-1 min-h-0 overflow-y-auto py-2 pr-0.5 space-y-2.5">
           {/* Main 12-Hour Picker */}
           <div className="flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
             {/* AM / PM Toggle */}
@@ -259,30 +258,22 @@ export default function ClockInEditModal({
             </div>
           </div>
 
-          {/* Smart Auto Sync Elapsed Option */}
-          <div className="space-y-1.5 pt-1">
-            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={syncElapsed}
-                onChange={(e) => setSyncElapsed(e.target.checked)}
-                className="w-3.5 h-3.5 text-indigo-600 rounded-sm cursor-pointer"
-              />
-              <span className="text-[10.5px] font-medium text-slate-700 dark:text-slate-300">
-                출근 시각에 맞춰 현재 근무 시간도 자동 계산
-              </span>
-            </label>
-
-            {syncElapsed && (
-              <div className="p-2 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 text-[10px] text-indigo-700 dark:text-indigo-300 leading-tight">
-                💡 변경 시 현재까지 순수 근무 시간이 <strong>{formattedCalculatedTime}</strong>(으)로 조정됩니다.
-                {formattedLunchDeducted && (
-                  <span className="block mt-0.5 text-[9.5px] text-amber-600 dark:text-amber-400 font-semibold">
-                    🍽️ 점심시간 {formattedLunchDeducted} 자동 제외 완료
-                  </span>
-                )}
+          {/* Work Time Preview Info Box */}
+          <div className="pt-0.5 space-y-1.5">
+            <div className="p-2.5 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 text-[10.5px] text-indigo-700 dark:text-indigo-300 leading-snug">
+              <div className="flex items-center gap-1 font-bold mb-0.5 text-indigo-800 dark:text-indigo-200">
+                <Sparkles size={12} className="text-indigo-500" />
+                <span>근무 시간 자동 동기화</span>
               </div>
-            )}
+              <p className="text-[10px] text-indigo-600/90 dark:text-indigo-300">
+                출근 시각({formatted12h})에 맞춰 현재까지 근무한 시간이 <strong>{formattedCalculatedTime}</strong>(으)로 자동 계산됩니다.
+              </p>
+              {formattedLunchDeducted && (
+                <div className="mt-1 inline-flex items-center gap-1 text-[9.5px] text-amber-700 dark:text-amber-300 font-semibold bg-amber-100/70 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60">
+                  <span>🍽️ 점심시간 {formattedLunchDeducted} 자동 제외 완료</span>
+                </div>
+              )}
+            </div>
 
             {timerState === 'IDLE' && (
               <label className="flex items-center gap-1.5 cursor-pointer select-none pt-0.5">

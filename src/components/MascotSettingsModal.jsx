@@ -175,7 +175,8 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 bg-black/40 dark:bg-black/60 rounded-[28px] overflow-hidden animate-fadeIn">
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 bg-black/40 dark:bg-black/60 rounded-[28px] overflow-hidden animate-fadeIn">
       <div className="w-full max-w-[365px] max-h-[365px] bg-white dark:bg-slate-900 rounded-2xl p-3 shadow-md border border-slate-200/90 dark:border-slate-700/80 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
@@ -541,70 +542,83 @@ export default function MascotSettingsModal({ customImages, setCustomImages, onC
           </button>
         </div>
       </div>
+    </div>
 
-      {/* Sample Sprite Sheet Full Preview Modal */}
-      {showSamplePreviewModal && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 max-w-[340px] w-full border border-slate-200 dark:border-slate-700 shadow-xl flex flex-col space-y-2">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1">
-                🎀 6x6 스프라이트 시트 구조
-              </span>
-              <button
-                onClick={() => setShowSamplePreviewModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <X size={14} />
-              </button>
-            </div>
+    {/* Sample Sprite Sheet Full Preview Modal (Rendered outside parent overflow at top-most z-index) */}
+    {showSamplePreviewModal && (
+      <div className="fixed inset-0 z-[110] flex items-center justify-center p-2.5 bg-black/75 backdrop-blur-xs animate-fadeIn app-no-drag">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-3 max-w-[350px] w-full max-h-[380px] border border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden">
+          {/* Fixed Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 shrink-0">
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <Sparkles size={13} className="text-pink-500" />
+              🎀 6x6 스프라이트 시트 구조
+            </span>
+            <button
+              onClick={() => setShowSamplePreviewModal(false)}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="닫기"
+            >
+              <X size={15} />
+            </button>
+          </div>
 
-            <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+          {/* Scrollable Body */}
+          <div className="flex-1 min-h-0 overflow-y-auto py-1.5 pr-0.5 space-y-2">
+            <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 flex items-center justify-center p-1.5">
               <img
                 src="./sample-spritesheet.png"
                 alt="고양이 스프라이트 시트 전체 구조"
-                className="w-full h-auto object-contain"
+                className="max-h-[160px] w-auto object-contain mx-auto rounded-lg shadow-2xs"
               />
             </div>
 
-            <div className="text-[9.5px] text-slate-500 dark:text-slate-400 space-y-0.5 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl">
-              <div><strong>1행:</strong> 1단계 - 알 부화 (0~15%)</div>
-              <div><strong>2행:</strong> 2단계 - 아기 고양이 (15~35%)</div>
-              <div><strong>3행:</strong> 3단계 - 성장기 고양이 (35~60%)</div>
-              <div><strong>4행:</strong> 4단계 - 열일 직장인 고양이 (60~85%)</div>
-              <div><strong>5행:</strong> 5단계 - 만세 프로 마스터 (85~99%)</div>
-              <div><strong>6행:</strong> 6단계 - 퇴근 완료 파티 (100%)</div>
-            </div>
-
-            <div className="flex justify-end gap-1.5 pt-1">
-              <a
-                href="./sample-spritesheet.png"
-                download="sample-kitty-spritesheet.png"
-                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 flex items-center gap-1"
-              >
-                <Download size={12} />
-                <span>다운로드</span>
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  soundManager.playClick();
-                  setGrowthData((prev) => ({
-                    ...prev,
-                    spriteSheetUrl: './sample-spritesheet.png',
-                    spriteRows: 6,
-                    spriteCols: 6,
-                  }));
-                  setShowSamplePreviewModal(false);
-                }}
-                className="px-3 py-1.5 text-xs font-bold bg-pink-500 hover:bg-pink-600 text-white rounded-lg flex items-center gap-1 shadow-sm"
-              >
-                <Sparkles size={12} />
-                <span>이 예시 바로 적용</span>
-              </button>
+            <div className="text-[9.5px] text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-100 dark:border-slate-800">
+              <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200 mb-1 flex items-center gap-1">
+                📋 각 행별 성장 단계 안내
+              </div>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] leading-tight">
+                <div><strong className="text-indigo-600 dark:text-indigo-400">1행:</strong> 알 부화 (0~15%)</div>
+                <div><strong className="text-indigo-600 dark:text-indigo-400">2행:</strong> 아기 고양이 (15~35%)</div>
+                <div><strong className="text-indigo-600 dark:text-indigo-400">3행:</strong> 성장기 고양이 (35~60%)</div>
+                <div><strong className="text-indigo-600 dark:text-indigo-400">4행:</strong> 직장인 고양이 (60~85%)</div>
+                <div><strong className="text-indigo-600 dark:text-indigo-400">5행:</strong> 프로 마스터 (85~99%)</div>
+                <div><strong className="text-pink-600 dark:text-pink-400">6행:</strong> 퇴근 파티 (100%)</div>
+              </div>
             </div>
           </div>
+
+          {/* Fixed Footer */}
+          <div className="flex justify-end gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+            <a
+              href="./sample-spritesheet.png"
+              download="sample-kitty-spritesheet.png"
+              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-1 transition-colors"
+            >
+              <Download size={12} />
+              <span>다운로드</span>
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playClick();
+                setGrowthData((prev) => ({
+                  ...prev,
+                  spriteSheetUrl: './sample-spritesheet.png',
+                  spriteRows: 6,
+                  spriteCols: 6,
+                }));
+                setShowSamplePreviewModal(false);
+              }}
+              className="px-3 py-1.5 text-xs font-bold bg-pink-500 hover:bg-pink-600 active:scale-95 text-white rounded-lg flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+            >
+              <Sparkles size={12} />
+              <span>이 예시 바로 적용</span>
+            </button>
+          </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </>
+);
 }
