@@ -160,6 +160,12 @@ export default function SettingsModal({
     }));
   };
 
+  const handleSave = () => {
+    setSettings(localSettings);
+    soundManager.playClick();
+    onClose();
+  };
+
   const presetConfigList = [
     {
       key: 'normal',
