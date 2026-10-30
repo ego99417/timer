@@ -1,16 +1,21 @@
 /**
  * @file src/components/ClockInEditModal.jsx
- * @description 출근 시각 직접 변경 모달 컴포넌트
+ * @description 출근 시각 및 오늘 근무 형태(오전반차, 오후반차, 반반차) 설정 모달
  * 
  * [주요 역할]
+ * - 오늘의 근무 형태(정상근무, 오전반차 4h, 오후반차 4h, 반반차 6h) 원클릭 선택
  * - 출근 버튼을 늦게 눌렀을 때 실제 출근 시각(오전/오후 H:MM)을 직접 지정
- * - '지금', '10분 전', '30분 전' 등 빠른 프리셋 버튼 제공
- * - 변경된 시각에 맞춰 누적 근무 시간(경과 시간)을 자동 재계산하여 동기화
+ * - 변경된 시각 및 점심시간을 감안하여 누적 순수 근무 시간을 자동 동기화
  */
 
 import React, { useState, useMemo } from 'react';
-import { Clock, Check, X, Sparkles, RotateCcw } from 'lucide-react';
-import { formatTo12Hour, parse12HourTime, calculateWorkedSecondsWithLunch } from '../utils/timeFormat';
+import { Clock, Check, X, Sparkles, Briefcase } from 'lucide-react';
+import {
+  formatTo12Hour,
+  parse12HourTime,
+  calculateWorkedSecondsWithLunch,
+  calculateEstimatedClockOut,
+} from '../utils/timeFormat';
 import { soundManager } from '../utils/audio';
 
 export default function ClockInEditModal({
@@ -18,15 +23,34 @@ export default function ClockInEditModal({
   elapsedSeconds,
   timerState,
   settings,
+  currentWorkType = 'normal',
+  baseTargetHours = 8,
   onSave,
   onClose,
 }) {
   const initial = useMemo(() => parse12HourTime(currentClockInTime), [currentClockInTime]);
 
+  const [workType, setWorkType] = useState(currentWorkType || 'normal'); // 'normal' | 'half_am' | 'half_pm' | 'quarter'
   const [period, setPeriod] = useState(initial.period); // '오전' | '오후'
   const [hour, setHour] = useState(initial.hours12); // 1..12
   const [minute, setMinute] = useState(initial.minutes); // 0..59
   const [startIfIdle, setStartIfIdle] = useState(timerState === 'IDLE');
+
+  // Calculate target hours for chosen work type using settings preset
+  const targetHours = useMemo(() => {
+    const presetHours = settings?.workTypePresets?.[workType]?.hours;
+    if (typeof presetHours === 'number' && presetHours > 0) {
+      return presetHours;
+    }
+    const base = baseTargetHours ?? 8;
+    if (workType === 'half_am' || workType === 'half_pm') {
+      return Math.max(1, Math.round(base / 2));
+    }
+    if (workType === 'quarter') {
+      return Math.max(1, base - 2);
+    }
+    return base;
+  }, [workType, baseTargetHours, settings]);
 
   // Convert selected (period, hour, minute) to 24-hour Date on today
   const selectedDate = useMemo(() => {
@@ -43,6 +67,20 @@ export default function ClockInEditModal({
     const displayMins = minute.toString().padStart(2, '0');
     return `${period} ${hour}:${displayMins}`;
   }, [period, hour, minute]);
+
+  // Calculate estimated clock-out time based on chosen clock-in and target hours
+  const estimatedClockOutDate = useMemo(() => {
+    return calculateEstimatedClockOut(selectedDate, targetHours, {
+      autoLunchBreak: settings?.autoLunchBreak ?? true,
+      lunchStart: settings?.lunchStart || '12:00',
+      lunchEnd: settings?.lunchEnd || '13:00',
+    });
+  }, [selectedDate, targetHours, settings]);
+
+  const formattedEstimatedClockOut = useMemo(() => {
+    if (!estimatedClockOutDate) return null;
+    return formatTo12Hour(estimatedClockOutDate);
+  }, [estimatedClockOutDate]);
 
   // Calculate estimated net elapsed seconds based on chosen clock-in time (deducting lunch break)
   const { netWorkedSeconds: calculatedElapsedSec, lunchDeductedSeconds } = useMemo(() => {
@@ -92,12 +130,37 @@ export default function ClockInEditModal({
     applyPreset(parsed.period, parsed.hours12, parsed.minutes);
   };
 
+  // Tab selection: automatically applies the clock-in time configured in Settings for this work type
+  const handleSelectWorkType = (type) => {
+    setWorkType(type);
+    soundManager.playClick();
+
+    const preset = settings?.workTypePresets?.[type];
+    if (preset?.clockIn) {
+      const parsed = parse12HourTime(preset.clockIn);
+      setPeriod(parsed.period);
+      setHour(parsed.hours12);
+      setMinute(parsed.minutes);
+    } else {
+      if (type === 'half_am') {
+        setPeriod('오후');
+        setHour(2);
+        setMinute(0);
+      } else {
+        setPeriod('오전');
+        setHour(9);
+        setMinute(0);
+      }
+    }
+  };
+
   const handleSave = () => {
     soundManager.playClick();
     onSave({
       newClockInTime: formatted12h,
       newElapsedSeconds: calculatedElapsedSec,
       startTimer: startIfIdle && timerState === 'IDLE',
+      newWorkType: workType,
     });
     onClose();
   };
@@ -112,8 +175,8 @@ export default function ClockInEditModal({
               <Clock size={14} />
             </div>
             <div>
-              <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100">출근 시각 직접 변경</h3>
-              <p className="text-[9.5px] text-slate-400">12시간제(오전/오후) 기준으로 출근 시각을 설정합니다</p>
+              <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100">출근 시각 및 오늘 근무 형태</h3>
+              <p className="text-[9.5px] text-slate-400">오전/오후반차, 반반차 및 출근 시각 설정</p>
             </div>
           </div>
           <button
@@ -124,26 +187,100 @@ export default function ClockInEditModal({
           </button>
         </div>
 
-        {/* Time Selection Controls (Scrollable if screen scaling is high) */}
+        {/* Scrollable Content Body */}
         <div className="flex-1 min-h-0 overflow-y-auto py-2 pr-0.5 space-y-2.5">
+          {/* 오늘의 근무 형태 선택 (정상 / 오전반차 / 오후반차 / 반반차) */}
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                <Briefcase size={12} className="text-indigo-500" />
+                오늘의 근무 형태
+              </span>
+              <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded-full border border-indigo-100 dark:border-indigo-900/40">
+                목표 {targetHours}시간
+              </span>
+            </div>
+
+            <div className="grid grid-cols-4 gap-1 text-[10px]">
+              {[
+                {
+                  key: 'normal',
+                  label: '정상근무',
+                  sub: `${settings?.workTypePresets?.normal?.hours ?? baseTargetHours ?? 8}h`,
+                  icon: '🏢',
+                },
+                {
+                  key: 'half_am',
+                  label: '오전반차',
+                  sub: `${settings?.workTypePresets?.half_am?.hours ?? 4}h`,
+                  icon: '☀️',
+                },
+                {
+                  key: 'half_pm',
+                  label: '오후반차',
+                  sub: `${settings?.workTypePresets?.half_pm?.hours ?? 4}h`,
+                  icon: '☕',
+                },
+                {
+                  key: 'quarter',
+                  label: '반반차(연연차)',
+                  sub: `${settings?.workTypePresets?.quarter?.hours ?? 6}h`,
+                  icon: '⚡',
+                },
+              ].map((item) => {
+                const isSelected = workType === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => handleSelectWorkType(item.key)}
+                    className={`py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-500 text-white shadow-xs font-bold ring-1 ring-indigo-400'
+                        : 'bg-white dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200/70 dark:border-slate-600'
+                    }`}
+                  >
+                    <span className="text-xs mb-0.5">{item.icon}</span>
+                    <span className="font-semibold text-[9.5px] leading-tight">{item.label}</span>
+                    <span className={`text-[8.5px] mt-0.5 ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
+                      {item.sub}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Main 12-Hour Picker */}
-          <div className="flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-            {/* AM / PM Toggle */}
-            <div className="flex flex-col gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setPeriod('오전');
-                  soundManager.playClick();
-                }}
-                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-                  period === '오전'
-                    ? 'bg-indigo-500 text-white shadow-xs'
-                    : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
-                }`}
-              >
-                오전
-              </button>
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+            <div className="flex items-center justify-between mb-1 px-1">
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
+                출근 시각 지정
+              </span>
+              {formattedEstimatedClockOut && (
+                <span className="text-[9.5px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded-full border border-indigo-100 dark:border-indigo-900/40">
+                  퇴근 예정 {formattedEstimatedClockOut}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center justify-center gap-2 pt-0.5">
+              {/* AM / PM Toggle */}
+              <div className="flex flex-col gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPeriod('오전');
+                    soundManager.playClick();
+                  }}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                    period === '오전'
+                      ? 'bg-indigo-500 text-white shadow-xs'
+                      : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                  }`}
+                >
+                  오전
+                </button>
               <button
                 type="button"
                 onClick={() => {
@@ -192,6 +329,7 @@ export default function ClockInEditModal({
                   </option>
                 ))}
               </select>
+              </div>
             </div>
           </div>
 
@@ -206,68 +344,108 @@ export default function ClockInEditModal({
               >
                 지금 시각
               </button>
-              <button
-                type="button"
-                onClick={() => applyMinutesAgo(10)}
-                className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
-              >
-                10분 전
-              </button>
-              <button
-                type="button"
-                onClick={() => applyMinutesAgo(30)}
-                className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
-              >
-                30분 전
-              </button>
-              <button
-                type="button"
-                onClick={() => applyMinutesAgo(60)}
-                className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
-              >
-                1시간 전
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset('오전', 9, 0)}
-                className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
-              >
-                오전 9:00
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset('오전', 9, 30)}
-                className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
-              >
-                오전 9:30
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset('오전', 10, 0)}
-                className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
-              >
-                오전 10:00
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset('오후', 1, 0)}
-                className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
-              >
-                오후 1:00
-              </button>
+
+              {workType === 'half_am' ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('오후', 1, 0)}
+                    className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    오후 1:00
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('오후', 1, 30)}
+                    className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    오후 1:30
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('오후', 2, 0)}
+                    className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    오후 2:00
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => applyMinutesAgo(10)}
+                    className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    10분 전
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyMinutesAgo(30)}
+                    className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    30분 전
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyMinutesAgo(60)}
+                    className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    1시간 전
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('오전', 9, 0)}
+                    className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    오전 9:00
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('오전', 9, 30)}
+                    className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    오전 9:30
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('오전', 10, 0)}
+                    className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    오전 10:00
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('오후', 1, 0)}
+                    className="py-1 px-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    오후 1:00
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
           {/* Work Time Preview Info Box */}
           <div className="pt-0.5 space-y-1.5">
             <div className="p-2.5 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 text-[10.5px] text-indigo-700 dark:text-indigo-300 leading-snug">
-              <div className="flex items-center gap-1 font-bold mb-0.5 text-indigo-800 dark:text-indigo-200">
-                <Sparkles size={12} className="text-indigo-500" />
-                <span>근무 시간 자동 동기화</span>
+              <div className="flex items-center justify-between font-bold mb-0.5 text-indigo-800 dark:text-indigo-200">
+                <span className="flex items-center gap-1">
+                  <Sparkles size={12} className="text-indigo-500" />
+                  근무 시간 자동 동기화
+                </span>
+                <span className="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400">
+                  🎯 오늘 목표: {targetHours}시간
+                </span>
               </div>
               <p className="text-[10px] text-indigo-600/90 dark:text-indigo-300">
                 출근 시각({formatted12h})에 맞춰 현재까지 근무한 시간이 <strong>{formattedCalculatedTime}</strong>(으)로 자동 계산됩니다.
               </p>
+              {formattedEstimatedClockOut && (
+                <div className="mt-1 flex items-center justify-between text-[10px] text-indigo-800 dark:text-indigo-200 font-semibold pt-1 border-t border-indigo-100 dark:border-indigo-900/40">
+                  <span>🏃 예상 퇴근 시각</span>
+                  <span className="font-bold text-indigo-600 dark:text-indigo-400">{formattedEstimatedClockOut}</span>
+                </div>
+              )}
               {formattedLunchDeducted && (
                 <div className="mt-1 inline-flex items-center gap-1 text-[9.5px] text-amber-700 dark:text-amber-300 font-semibold bg-amber-100/70 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/60">
                   <span>🍽️ 점심시간 {formattedLunchDeducted} 자동 제외 완료</span>
@@ -306,7 +484,7 @@ export default function ClockInEditModal({
             className="px-4 py-1.5 text-xs font-bold bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white rounded-lg shadow-sm transition-all flex items-center gap-1"
           >
             <Check size={13} />
-            {formatted12h} 저장
+            <span>{targetHours}h 설정 저장</span>
           </button>
         </div>
       </div>

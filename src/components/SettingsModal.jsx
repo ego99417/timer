@@ -25,14 +25,31 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { soundManager } from '../utils/audio';
+import { calculateNetHoursBetween } from '../utils/timeFormat';
 
 export default function SettingsModal({
   settings,
   setSettings,
   onClose,
 }) {
+  const DEFAULT_WORK_TYPE_PRESETS = {
+    normal: { clockIn: '09:00', clockOut: '18:00', hours: 8 },
+    half_am: { clockIn: '14:00', clockOut: '18:00', hours: 4 },
+    half_pm: { clockIn: '09:00', clockOut: '13:00', hours: 4 },
+    quarter: { clockIn: '09:00', clockOut: '16:00', hours: 6 },
+  };
+
   const [activeTab, setActiveTab] = useState('work'); // 'work' | 'pomodoro' | 'dock' | 'system'
-  const [localSettings, setLocalSettings] = useState(JSON.parse(JSON.stringify(settings)));
+  const [localSettings, setLocalSettings] = useState(() => {
+    const cloned = JSON.parse(JSON.stringify(settings));
+    return {
+      ...cloned,
+      workTypePresets: {
+        ...DEFAULT_WORK_TYPE_PRESETS,
+        ...(cloned.workTypePresets || {}),
+      },
+    };
+  });
 
   const dockItemLabels = {
     timer: { label: '타이머 상태', desc: '현재 진행 상태 점등 및 남은 시간 표시' },
@@ -101,11 +118,74 @@ export default function SettingsModal({
     soundManager.playClick();
   };
 
-  const handleSave = () => {
-    setSettings(localSettings);
-    soundManager.playClick();
-    onClose();
+  const handlePresetTimeChange = (type, field, val) => {
+    setLocalSettings((prev) => {
+      const presets = prev.workTypePresets || DEFAULT_WORK_TYPE_PRESETS;
+      const current = presets[type] || DEFAULT_WORK_TYPE_PRESETS[type];
+      const nextItem = { ...current, [field]: val };
+
+      // Auto compute pure work hours if both clockIn and clockOut are set
+      if (nextItem.clockIn && nextItem.clockOut) {
+        const netH = calculateNetHoursBetween(nextItem.clockIn, nextItem.clockOut, {
+          autoLunchBreak: prev.autoLunchBreak,
+          lunchStart: prev.lunchStart,
+          lunchEnd: prev.lunchEnd,
+        });
+        if (netH > 0) {
+          nextItem.hours = netH;
+        }
+      }
+
+      return {
+        ...prev,
+        workTypePresets: {
+          ...presets,
+          [type]: nextItem,
+        },
+      };
+    });
   };
+
+  const handlePresetHoursChange = (type, val) => {
+    const num = Math.max(0.5, Math.min(24, parseFloat(val) || 0));
+    setLocalSettings((prev) => ({
+      ...prev,
+      workTypePresets: {
+        ...(prev.workTypePresets || DEFAULT_WORK_TYPE_PRESETS),
+        [type]: {
+          ...(prev.workTypePresets?.[type] || DEFAULT_WORK_TYPE_PRESETS[type]),
+          hours: num,
+        },
+      },
+    }));
+  };
+
+  const presetConfigList = [
+    {
+      key: 'normal',
+      icon: '🏢',
+      title: '정상근무',
+      desc: '기본 출근 및 퇴근 시각',
+    },
+    {
+      key: 'half_am',
+      icon: '☀️',
+      title: '오전반차 (오후 출근)',
+      desc: '오후 출근 후 퇴근 시각 지정',
+    },
+    {
+      key: 'half_pm',
+      icon: '☕',
+      title: '오후반차 (조기 퇴근)',
+      desc: '오전 출근 후 조기 퇴근 시각 지정',
+    },
+    {
+      key: 'quarter',
+      icon: '⚡',
+      title: '반반차 / 연연차 (2시간 단축)',
+      desc: '2시간 일찍 퇴근 또는 늦게 출근',
+    },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 bg-black/40 dark:bg-black/60 rounded-[28px] overflow-hidden animate-fadeIn">
@@ -262,6 +342,77 @@ export default function SettingsModal({
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Work Type Presets (Half-day / Quarter-day) */}
+              <div className="p-3 bg-slate-50/80 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                      근무 형태별 기본 시각 설정 (반차 / 연연차)
+                    </h4>
+                    <p className="text-[10px] text-slate-400">
+                      출퇴근 시각을 지정하면 순수 목표 시간이 자동 계산되며, 출근 시간 탭에서 원클릭 적용됩니다.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mt-2">
+                  {presetConfigList.map((item) => {
+                    const preset = localSettings.workTypePresets?.[item.key] || DEFAULT_WORK_TYPE_PRESETS[item.key];
+                    return (
+                      <div
+                        key={item.key}
+                        className="p-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm">{item.icon}</span>
+                            <div>
+                              <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{item.title}</div>
+                              <div className="text-[9.5px] text-slate-400">{item.desc}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] text-slate-400 font-medium">순수 목표:</span>
+                            <input
+                              type="number"
+                              min="0.5"
+                              max="16"
+                              step="0.5"
+                              value={preset?.hours ?? DEFAULT_WORK_TYPE_PRESETS[item.key].hours}
+                              onChange={(e) => handlePresetHoursChange(item.key, e.target.value)}
+                              className="w-12 px-1 py-0.5 text-xs font-bold text-center rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                            <span className="text-[10px] font-semibold text-slate-400">시간</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10.5px] text-slate-400 font-medium">출근:</span>
+                            <input
+                              type="time"
+                              value={preset?.clockIn || DEFAULT_WORK_TYPE_PRESETS[item.key].clockIn}
+                              onChange={(e) => handlePresetTimeChange(item.key, 'clockIn', e.target.value)}
+                              className="px-2 py-0.5 text-xs font-medium rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                          </div>
+                          <span className="text-slate-300 dark:text-slate-600 font-bold">~</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10.5px] text-slate-400 font-medium">퇴근:</span>
+                            <input
+                              type="time"
+                              value={preset?.clockOut || DEFAULT_WORK_TYPE_PRESETS[item.key].clockOut}
+                              onChange={(e) => handlePresetTimeChange(item.key, 'clockOut', e.target.value)}
+                              className="px-2 py-0.5 text-xs font-medium rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}

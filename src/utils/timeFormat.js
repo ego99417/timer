@@ -157,3 +157,65 @@ export function calculateWorkedSecondsWithLunch(clockInDate, now = new Date(), l
 
   return { netWorkedSeconds, lunchDeductedSeconds };
 }
+
+/**
+ * Calculates estimated clock-out Date based on clockInDate, targetHours, and lunch break settings.
+ * 
+ * @param {Date} clockInDate - The clock-in Date object
+ * @param {number} targetHours - Target work hours (e.g. 8, 4, 6)
+ * @param {Object} lunchSettings - { autoLunchBreak: boolean, lunchStart: "HH:mm", lunchEnd: "HH:mm" }
+ * @returns {Date | null}
+ */
+export function calculateEstimatedClockOut(clockInDate, targetHours, lunchSettings = {}) {
+  if (!clockInDate || isNaN(clockInDate.getTime()) || !targetHours || targetHours <= 0) return null;
+
+  const targetSec = targetHours * 3600;
+  let clockOutMs = clockInDate.getTime() + targetSec * 1000;
+
+  const { autoLunchBreak, lunchStart, lunchEnd } = lunchSettings;
+  if (autoLunchBreak && lunchStart && lunchEnd) {
+    const [startH, startM] = lunchStart.split(":").map(Number);
+    const [endH, endM] = lunchEnd.split(":").map(Number);
+
+    if (!isNaN(startH) && !isNaN(startM) && !isNaN(endH) && !isNaN(endM)) {
+      const lunchStartDate = new Date(clockInDate);
+      lunchStartDate.setHours(startH, startM, 0, 0);
+      const lunchEndDate = new Date(clockInDate);
+      lunchEndDate.setHours(endH, endM, 0, 0);
+
+      const lunchStartMs = lunchStartDate.getTime();
+      const lunchEndMs = lunchEndDate.getTime();
+
+      // If work period overlaps with the lunch break, add the lunch duration
+      if (clockInDate.getTime() < lunchEndMs && clockOutMs > lunchStartMs) {
+        const lunchDurationMs = Math.max(0, lunchEndMs - lunchStartMs);
+        clockOutMs += lunchDurationMs;
+      }
+    }
+  }
+
+  return new Date(clockOutMs);
+}
+
+/**
+ * Calculates net worked hours between "HH:mm" start and "HH:mm" end, deducting lunch break if applicable.
+ */
+export function calculateNetHoursBetween(clockInStr, clockOutStr, lunchSettings = {}) {
+  if (!clockInStr || !clockOutStr) return 8;
+  const [inH, inM] = clockInStr.split(":").map(Number);
+  const [outH, outM] = clockOutStr.split(":").map(Number);
+  if (isNaN(inH) || isNaN(inM) || isNaN(outH) || isNaN(outM)) return 8;
+
+  const dIn = new Date();
+  dIn.setHours(inH, inM, 0, 0);
+
+  const dOut = new Date();
+  dOut.setHours(outH, outM, 0, 0);
+
+  if (dOut <= dIn) {
+    return 0;
+  }
+
+  const { netWorkedSeconds } = calculateWorkedSecondsWithLunch(dIn, dOut, lunchSettings);
+  return Math.round((netWorkedSeconds / 3600) * 10) / 10;
+}

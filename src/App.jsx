@@ -10,7 +10,7 @@
  * 5. 다크 모드, 사운드 음소거, 미니 플로팅 바 모드 및 각종 모달 팝업 상태 제어
  */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Play,
   Pause,
@@ -46,7 +46,12 @@ import CelebrationModal from "./components/CelebrationModal";
 import WarningToast from "./components/WarningToast";
 import ClockInEditModal from "./components/ClockInEditModal";
 import { soundManager } from "./utils/audio";
-import { formatTo12Hour, parse12HourTime, calculateWorkedSecondsWithLunch } from "./utils/timeFormat";
+import {
+  formatTo12Hour,
+  parse12HourTime,
+  calculateWorkedSecondsWithLunch,
+  calculateEstimatedClockOut,
+} from "./utils/timeFormat";
 
 // Helper to get today's date formatted as YYYY-MM-DD
 const getTodayDateStr = () => {
@@ -71,13 +76,34 @@ const DAY_LABELS = {
   sun: "일요일",
 };
 
+export const DEFAULT_WORK_TYPE_PRESETS = {
+  normal: { clockIn: "09:00", clockOut: "18:00", hours: 8 },
+  half_am: { clockIn: "14:00", clockOut: "18:00", hours: 4 },
+  half_pm: { clockIn: "09:00", clockOut: "13:00", hours: 4 },
+  quarter: { clockIn: "09:00", clockOut: "16:00", hours: 6 },
+};
+
+export const WORK_TYPE_LABELS = {
+  normal: { label: "정상근무", short: "" },
+  half_am: { label: "오전반차", short: "오전반차" },
+  half_pm: { label: "오후반차", short: "오후반차" },
+  quarter: { label: "반반차(연연차)", short: "반반차" },
+};
+
 export default function App() {
   // 1. Persistent Settings
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem("fluffy_settings");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          workTypePresets: {
+            ...DEFAULT_WORK_TYPE_PRESETS,
+            ...(parsed.workTypePresets || {}),
+          },
+        };
       } catch {
         // fallback
       }
@@ -87,6 +113,7 @@ export default function App() {
       autoLunchBreak: true,
       lunchStart: "12:00",
       lunchEnd: "13:00",
+      workTypePresets: DEFAULT_WORK_TYPE_PRESETS,
       dockSlots: ["timer", "mascot", "todo", "stats"],
       pomodoroEnabled: false,
       pomodoroWorkMinutes: 25,
@@ -192,6 +219,13 @@ export default function App() {
     const saved = localStorage.getItem("fluffy_clock_in_time");
     return saved ? formatTo12Hour(saved) : null;
   });
+  const [clockOutTime, setClockOutTime] = useState(() => {
+    const todayDateStr = getTodayDateStr();
+    const savedWorkDate = localStorage.getItem("fluffy_work_date");
+    if (savedWorkDate !== todayDateStr) return null;
+    const saved = localStorage.getItem("fluffy_clock_out_time");
+    return saved ? formatTo12Hour(saved) : null;
+  });
   const [hasTriggered5MinAlert, setHasTriggered5MinAlert] = useState(false);
   const [warningToastVisible, setWarningToastVisible] = useState(false);
   const [celebrationModalVisible, setCelebrationModalVisible] = useState(false);
@@ -211,10 +245,49 @@ export default function App() {
   timerStateRef.current = timerState;
   const hasTriggeredAutoClockOutRef = useRef(false);
 
+  // Today's Work Type: 'normal' | 'half_am' | 'half_pm' | 'quarter'
+  const [todayWorkType, setTodayWorkType] = useState(() => {
+    const todayDateStr = getTodayDateStr();
+    const savedWorkDate = localStorage.getItem("fluffy_work_date");
+    if (savedWorkDate !== todayDateStr) return "normal";
+    return localStorage.getItem("fluffy_today_work_type") || "normal";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("fluffy_today_work_type", todayWorkType);
+  }, [todayWorkType]);
+
   const todayKey = getTodayKey();
-  const targetHoursToday = settings.weekdayHours[todayKey] ?? 8;
+  const baseTargetHours = settings.weekdayHours[todayKey] ?? 8;
+  const targetHoursToday = (() => {
+    const presetHours = settings.workTypePresets?.[todayWorkType]?.hours;
+    if (typeof presetHours === "number" && presetHours > 0) {
+      return presetHours;
+    }
+    if (todayWorkType === "half_am" || todayWorkType === "half_pm") {
+      return Math.max(1, Math.round(baseTargetHours / 2));
+    }
+    if (todayWorkType === "quarter") {
+      return Math.max(1, baseTargetHours - 2);
+    }
+    return baseTargetHours;
+  })();
   const totalTargetSeconds = targetHoursToday * 3600;
   const remainingSeconds = Math.max(0, totalTargetSeconds - elapsedSeconds);
+
+  // Estimated clock-out time calculation based on clockInTime and targetHoursToday
+  const formattedEstimatedClockOut = useMemo(() => {
+    if (!clockInTime) return null;
+    const parsed = parse12HourTime(clockInTime);
+    const clockInDate = new Date();
+    clockInDate.setHours(parsed.hours24, parsed.minutes, 0, 0);
+    const outDate = calculateEstimatedClockOut(clockInDate, targetHoursToday, {
+      autoLunchBreak: settings.autoLunchBreak,
+      lunchStart: settings.lunchStart,
+      lunchEnd: settings.lunchEnd,
+    });
+    return outDate ? formatTo12Hour(outDate) : null;
+  }, [clockInTime, targetHoursToday, settings]);
 
   // Update theme on document
   useEffect(() => {
@@ -264,6 +337,15 @@ export default function App() {
       localStorage.removeItem("fluffy_clock_in_time");
     }
   }, [clockInTime]);
+
+  useEffect(() => {
+    localStorage.setItem("fluffy_work_date", getTodayDateStr());
+    if (clockOutTime) {
+      localStorage.setItem("fluffy_clock_out_time", clockOutTime);
+    } else {
+      localStorage.removeItem("fluffy_clock_out_time");
+    }
+  }, [clockOutTime]);
 
   useEffect(() => {
     localStorage.setItem("fluffy_work_date", getTodayDateStr());
@@ -344,6 +426,7 @@ export default function App() {
     if (timerState === "COMPLETED") {
       setElapsedSeconds(0);
       setClockInTime(nowStr);
+      setClockOutTime(null);
       setHasTriggered5MinAlert(false);
       hasTriggeredAutoClockOutRef.current = false;
     } else if (timerState === "IDLE") {
@@ -368,6 +451,7 @@ export default function App() {
           }
         }
       }
+      setClockOutTime(null);
       setHasTriggered5MinAlert(false);
       hasTriggeredAutoClockOutRef.current = false;
     }
@@ -385,9 +469,12 @@ export default function App() {
     lastTickRef.current = Date.now();
   };
 
-  // Directly change / register Clock In Time
-  const handleSaveClockInTime = ({ newClockInTime, newElapsedSeconds, startTimer }) => {
+  // Directly change / register Clock In Time & Work Type
+  const handleSaveClockInTime = ({ newClockInTime, newElapsedSeconds, startTimer, newWorkType }) => {
     setClockInTime(newClockInTime);
+    if (newWorkType) {
+      setTodayWorkType(newWorkType);
+    }
     if (typeof newElapsedSeconds === "number") {
       setElapsedSeconds(newElapsedSeconds);
       lastTickRef.current = Date.now();
@@ -397,6 +484,7 @@ export default function App() {
       }
     }
     if (startTimer && (timerState === "IDLE" || timerState === "COMPLETED")) {
+      setClockOutTime(null);
       if (settings.autoLunchBreak && isCurrentlyLunchTime()) {
         setTimerState("REST");
         soundManager.playRestChime();
@@ -423,6 +511,7 @@ export default function App() {
     handleSetViewMode("normal");
 
     const nowStr = formatTo12Hour(new Date());
+    setClockOutTime(nowStr);
     const workedMins = Math.round(elapsedSeconds / 60);
 
     // Update weekly worked data
@@ -660,7 +749,7 @@ export default function App() {
               <h1 className="font-extrabold text-xs tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-1">
                 FluffyWork
                 <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 border border-indigo-100 dark:border-indigo-900/40">
-                  {DAY_LABELS[todayKey]} ({targetHoursToday}h)
+                  {DAY_LABELS[todayKey]} ({todayWorkType !== "normal" ? `${WORK_TYPE_LABELS[todayWorkType].label} ` : ""}{targetHoursToday}h)
                 </span>
               </h1>
               <p className="text-[9px] text-slate-400 leading-none">유연근무 타이머</p>
@@ -812,27 +901,76 @@ export default function App() {
               </button>
             </div>
 
-            {/* Quick Daily Target Summary info */}
-            <div className="mt-1 text-[9.5px] text-slate-400 flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  soundManager.playClick();
-                  setActiveModal("clockInEdit");
-                }}
-                className="hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1 group transition-colors cursor-pointer"
-                title="클릭하여 출근 시각 직접 변경 및 등록"
-              >
-                <span>출근 시각:</span>
-                <strong className="text-slate-600 dark:text-slate-300 font-medium group-hover:underline">
-                  {clockInTime ? formatTo12Hour(clockInTime) : "미등록"}
-                </strong>
-                <Edit2 size={9.5} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
-              </button>
-              <span>•</span>
-              <span>
-                목표: <strong className="text-slate-600 dark:text-slate-300 font-medium">{targetHoursToday}시간</strong>
-              </span>
+            {/* Quick Daily Target & Clock In / Out info */}
+            <div className="mt-1.5 flex flex-col items-center justify-center gap-0.5 text-[9.5px] select-none text-slate-400">
+              {/* Row 1: 출근 시각 & 목표 */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundManager.playClick();
+                    setActiveModal("clockInEdit");
+                  }}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1 group transition-colors cursor-pointer"
+                  title="클릭하여 출근 시각 및 오늘 근무 형태(반차 등) 변경"
+                >
+                  <span className="text-slate-400">출근:</span>
+                  <strong className="text-slate-600 dark:text-slate-300 font-medium group-hover:underline">
+                    {clockInTime ? formatTo12Hour(clockInTime) : "미등록"}
+                  </strong>
+                  <Edit2 size={8.5} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                </button>
+
+                <span className="text-slate-300 dark:text-slate-600">•</span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundManager.playClick();
+                    setActiveModal("clockInEdit");
+                  }}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1 group transition-colors cursor-pointer"
+                  title="클릭하여 오늘 근무 형태(반차 등) 변경"
+                >
+                  <span className="text-slate-400">목표:</span>
+                  <strong className="text-slate-600 dark:text-slate-300 font-medium group-hover:underline">
+                    {targetHoursToday}시간{todayWorkType !== "normal" ? ` (${WORK_TYPE_LABELS[todayWorkType]?.short || todayWorkType})` : ""}
+                  </strong>
+                  <Edit2 size={8.5} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                </button>
+              </div>
+
+              {/* Row 2: 출근 시간 바로 밑에 퇴근 시간 표시 */}
+              <div className="flex items-center gap-1">
+                {timerState === "COMPLETED" && clockOutTime ? (
+                  <span className="flex items-center gap-1 text-pink-600 dark:text-pink-400 font-semibold">
+                    <span>🎉 퇴근:</span>
+                    <strong>{formatTo12Hour(clockOutTime)}</strong>
+                  </span>
+                ) : formattedEstimatedClockOut ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playClick();
+                      setActiveModal("clockInEdit");
+                    }}
+                    className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium hover:underline cursor-pointer"
+                    title="클릭하여 출근 시각 및 예상 퇴근 시간 상세 확인"
+                  >
+                    <span className="text-slate-400">퇴근 예정:</span>
+                    <strong className="font-semibold">{formattedEstimatedClockOut}</strong>
+                  </button>
+                ) : (
+                  <span className="text-slate-400/80">
+                    <span>퇴근 예정:</span>
+                    <strong className="ml-1 text-slate-500 dark:text-slate-400 font-medium">
+                      {settings?.workTypePresets?.[todayWorkType]?.clockOut
+                        ? formatTo12Hour(settings.workTypePresets[todayWorkType].clockOut)
+                        : "출근 시 자동 계산"}
+                    </strong>
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -874,13 +1012,15 @@ export default function App() {
         <SettingsModal settings={settings} setSettings={setSettings} onClose={() => setActiveModal(null)} />
       )}
 
-      {/* Clock-In Time Edit Modal */}
+      {/* Clock-In Time & Work Type Edit Modal */}
       {activeModal === "clockInEdit" && (
         <ClockInEditModal
           currentClockInTime={clockInTime}
           elapsedSeconds={elapsedSeconds}
           timerState={timerState}
           settings={settings}
+          currentWorkType={todayWorkType}
+          baseTargetHours={baseTargetHours}
           onSave={handleSaveClockInTime}
           onClose={() => setActiveModal(null)}
         />
