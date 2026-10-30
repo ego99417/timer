@@ -171,7 +171,7 @@ export default function SettingsModal({
       key: 'normal',
       icon: '🏢',
       title: '정상근무',
-      desc: '기본 출근 및 퇴근 시각',
+      desc: '기본 출근 시각 (목표 시간은 상단 요일별 설정값 연동)',
     },
     {
       key: 'half_am',
@@ -380,17 +380,25 @@ export default function SettingsModal({
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className="text-[10px] text-slate-400 font-medium">순수 목표:</span>
-                            <input
-                              type="number"
-                              min="0.5"
-                              max="16"
-                              step="0.5"
-                              value={preset?.hours ?? DEFAULT_WORK_TYPE_PRESETS[item.key].hours}
-                              onChange={(e) => handlePresetHoursChange(item.key, e.target.value)}
-                              className="w-12 px-1 py-0.5 text-xs font-bold text-center rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                            />
-                            <span className="text-[10px] font-semibold text-slate-400">시간</span>
+                            {item.key === 'normal' ? (
+                              <span className="text-[9.5px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-900/40">
+                                요일별 설정 연동
+                              </span>
+                            ) : (
+                              <>
+                                <span className="text-[10px] text-slate-400 font-medium">순수 목표:</span>
+                                <input
+                                  type="number"
+                                  min="0.5"
+                                  max="16"
+                                  step="0.5"
+                                  value={preset?.hours ?? DEFAULT_WORK_TYPE_PRESETS[item.key].hours}
+                                  onChange={(e) => handlePresetHoursChange(item.key, e.target.value)}
+                                  className="w-12 px-1 py-0.5 text-xs font-bold text-center rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                />
+                                <span className="text-[10px] font-semibold text-slate-400">시간</span>
+                              </>
+                            )}
                           </div>
                         </div>
 

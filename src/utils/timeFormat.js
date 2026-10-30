@@ -159,20 +159,61 @@ export function calculateWorkedSecondsWithLunch(clockInDate, now = new Date(), l
 }
 
 /**
- * Calculates estimated clock-out Date based on clockInDate, targetHours, and lunch break settings.
+ * Calculates estimated clock-out Date based on clockInDate, targetHours, lunch break, and workTypePreset settings.
+ * 
+ * If workTypePreset has clockIn and clockOut configured in Settings (e.g. 09:00 ~ 13:00 for afternoon half-day):
+ * It uses the preset's clockOut shifted by any difference in actual clock-in time!
  * 
  * @param {Date} clockInDate - The clock-in Date object
  * @param {number} targetHours - Target work hours (e.g. 8, 4, 6)
- * @param {Object} lunchSettings - { autoLunchBreak: boolean, lunchStart: "HH:mm", lunchEnd: "HH:mm" }
+ * @param {Object} options - { autoLunchBreak: boolean, lunchStart: "HH:mm", lunchEnd: "HH:mm", workTypePreset?: { clockIn: string, clockOut: string, hours: number } }
  * @returns {Date | null}
  */
-export function calculateEstimatedClockOut(clockInDate, targetHours, lunchSettings = {}) {
-  if (!clockInDate || isNaN(clockInDate.getTime()) || !targetHours || targetHours <= 0) return null;
+export function calculateEstimatedClockOut(clockInDate, targetHours, options = {}) {
+  if (!clockInDate || isNaN(clockInDate.getTime())) return null;
 
+  const { autoLunchBreak, lunchStart, lunchEnd, workTypePreset } = options;
+
+  // 1. If preset clockIn & clockOut exist in Settings, directly reference them!
+  if (workTypePreset?.clockIn && workTypePreset?.clockOut) {
+    const [pInH, pInM] = workTypePreset.clockIn.split(":").map(Number);
+    const [pOutH, pOutM] = workTypePreset.clockOut.split(":").map(Number);
+
+    if (!isNaN(pInH) && !isNaN(pInM) && !isNaN(pOutH) && !isNaN(pOutM)) {
+      const presetInDate = new Date(clockInDate);
+      presetInDate.setHours(pInH, pInM, 0, 0);
+
+      const presetOutDate = new Date(clockInDate);
+      presetOutDate.setHours(pOutH, pOutM, 0, 0);
+
+      if (presetOutDate > presetInDate) {
+        // Delta between actual/selected clock-in and preset scheduled clock-in
+        const clockInDeltaMs = clockInDate.getTime() - presetInDate.getTime();
+
+        // Calculate baseline net pure hours between preset clockIn and preset clockOut
+        const presetNetHours = calculateNetHoursBetween(workTypePreset.clockIn, workTypePreset.clockOut, {
+          autoLunchBreak,
+          lunchStart,
+          lunchEnd,
+        });
+
+        // If today's targetHours is specified and differs from preset net hours (e.g. Friday 7h vs preset 8h)
+        let targetHoursDeltaMs = 0;
+        if (typeof targetHours === 'number' && targetHours > 0 && presetNetHours > 0 && Math.abs(targetHours - presetNetHours) >= 0.05) {
+          targetHoursDeltaMs = (targetHours - presetNetHours) * 3600 * 1000;
+        }
+
+        const finalMs = presetOutDate.getTime() + clockInDeltaMs + targetHoursDeltaMs;
+        return new Date(finalMs);
+      }
+    }
+  }
+
+  // 2. Fallback: calculate based on targetHours + lunch break overlap
+  if (!targetHours || targetHours <= 0) return null;
   const targetSec = targetHours * 3600;
   let clockOutMs = clockInDate.getTime() + targetSec * 1000;
 
-  const { autoLunchBreak, lunchStart, lunchEnd } = lunchSettings;
   if (autoLunchBreak && lunchStart && lunchEnd) {
     const [startH, startM] = lunchStart.split(":").map(Number);
     const [endH, endM] = lunchEnd.split(":").map(Number);

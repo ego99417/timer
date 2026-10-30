@@ -260,8 +260,13 @@ export default function App() {
   const todayKey = getTodayKey();
   const baseTargetHours = settings.weekdayHours[todayKey] ?? 8;
   const targetHoursToday = (() => {
+    // 1. 정상근무는 요일별 목표 근무시간(weekdayHours)을 100% 반영
+    if (todayWorkType === "normal") {
+      return baseTargetHours;
+    }
+    // 2. 반차 및 반반차: 기준 8시간 요일이면 프리셋 시간 반영, 그 외 요일은 요일 기준 비례 계산
     const presetHours = settings.workTypePresets?.[todayWorkType]?.hours;
-    if (typeof presetHours === "number" && presetHours > 0) {
+    if (baseTargetHours === 8 && typeof presetHours === "number" && presetHours > 0) {
       return presetHours;
     }
     if (todayWorkType === "half_am" || todayWorkType === "half_pm") {
@@ -275,19 +280,31 @@ export default function App() {
   const totalTargetSeconds = targetHoursToday * 3600;
   const remainingSeconds = Math.max(0, totalTargetSeconds - elapsedSeconds);
 
-  // Estimated clock-out time calculation based on clockInTime and targetHoursToday
+  // Estimated clock-out time calculation referencing settings workTypePreset and clockInTime
   const formattedEstimatedClockOut = useMemo(() => {
-    if (!clockInTime) return null;
-    const parsed = parse12HourTime(clockInTime);
-    const clockInDate = new Date();
-    clockInDate.setHours(parsed.hours24, parsed.minutes, 0, 0);
-    const outDate = calculateEstimatedClockOut(clockInDate, targetHoursToday, {
+    const preset = settings?.workTypePresets?.[todayWorkType];
+
+    const refClockInDate = new Date();
+    if (clockInTime) {
+      const parsed = parse12HourTime(clockInTime);
+      refClockInDate.setHours(parsed.hours24, parsed.minutes, 0, 0);
+    } else {
+      const [pH, pM] = (preset?.clockIn || "09:00").split(":").map(Number);
+      refClockInDate.setHours(isNaN(pH) ? 9 : pH, isNaN(pM) ? 0 : pM, 0, 0);
+    }
+
+    const outDate = calculateEstimatedClockOut(refClockInDate, targetHoursToday, {
       autoLunchBreak: settings.autoLunchBreak,
       lunchStart: settings.lunchStart,
       lunchEnd: settings.lunchEnd,
+      workTypePreset: preset,
     });
-    return outDate ? formatTo12Hour(outDate) : null;
-  }, [clockInTime, targetHoursToday, settings]);
+
+    if (outDate) {
+      return formatTo12Hour(outDate);
+    }
+    return preset?.clockOut ? formatTo12Hour(preset.clockOut) : "오후 6:00";
+  }, [clockInTime, targetHoursToday, todayWorkType, settings]);
 
   // Update theme on document
   useEffect(() => {
@@ -947,28 +964,22 @@ export default function App() {
                     <span>🎉 퇴근:</span>
                     <strong>{formatTo12Hour(clockOutTime)}</strong>
                   </span>
-                ) : formattedEstimatedClockOut ? (
+                ) : (
                   <button
                     type="button"
                     onClick={() => {
                       soundManager.playClick();
                       setActiveModal("clockInEdit");
                     }}
-                    className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium hover:underline cursor-pointer"
+                    className="hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1 group transition-colors cursor-pointer"
                     title="클릭하여 출근 시각 및 예상 퇴근 시간 상세 확인"
                   >
                     <span className="text-slate-400">퇴근 예정:</span>
-                    <strong className="font-semibold">{formattedEstimatedClockOut}</strong>
-                  </button>
-                ) : (
-                  <span className="text-slate-400/80">
-                    <span>퇴근 예정:</span>
-                    <strong className="ml-1 text-slate-500 dark:text-slate-400 font-medium">
-                      {settings?.workTypePresets?.[todayWorkType]?.clockOut
-                        ? formatTo12Hour(settings.workTypePresets[todayWorkType].clockOut)
-                        : "출근 시 자동 계산"}
+                    <strong className="text-slate-600 dark:text-slate-300 font-medium group-hover:underline">
+                      {formattedEstimatedClockOut || "오후 6:00"}
                     </strong>
-                  </span>
+                    <Edit2 size={8.5} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                  </button>
                 )}
               </div>
             </div>

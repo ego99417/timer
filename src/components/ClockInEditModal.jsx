@@ -38,11 +38,16 @@ export default function ClockInEditModal({
 
   // Calculate target hours for chosen work type using settings preset
   const targetHours = useMemo(() => {
+    const base = baseTargetHours ?? 8;
+    // 1. 정상근무는 오늘 요일별 설정된 목표 근무시간(baseTargetHours)을 100% 반영
+    if (workType === 'normal') {
+      return base;
+    }
+    // 2. 반차 및 반반차: 기준 8시간 요일이면 프리셋 시간 반영, 그 외 요일은 요일 기준 비례 계산
     const presetHours = settings?.workTypePresets?.[workType]?.hours;
-    if (typeof presetHours === 'number' && presetHours > 0) {
+    if (base === 8 && typeof presetHours === 'number' && presetHours > 0) {
       return presetHours;
     }
-    const base = baseTargetHours ?? 8;
     if (workType === 'half_am' || workType === 'half_pm') {
       return Math.max(1, Math.round(base / 2));
     }
@@ -68,14 +73,15 @@ export default function ClockInEditModal({
     return `${period} ${hour}:${displayMins}`;
   }, [period, hour, minute]);
 
-  // Calculate estimated clock-out time based on chosen clock-in and target hours
+  // Calculate estimated clock-out time based on chosen clock-in and target hours, referencing workTypePreset
   const estimatedClockOutDate = useMemo(() => {
     return calculateEstimatedClockOut(selectedDate, targetHours, {
       autoLunchBreak: settings?.autoLunchBreak ?? true,
       lunchStart: settings?.lunchStart || '12:00',
       lunchEnd: settings?.lunchEnd || '13:00',
+      workTypePreset: settings?.workTypePresets?.[workType],
     });
-  }, [selectedDate, targetHours, settings]);
+  }, [selectedDate, targetHours, settings, workType]);
 
   const formattedEstimatedClockOut = useMemo(() => {
     if (!estimatedClockOutDate) return null;
@@ -206,25 +212,25 @@ export default function ClockInEditModal({
                 {
                   key: 'normal',
                   label: '정상근무',
-                  sub: `${settings?.workTypePresets?.normal?.hours ?? baseTargetHours ?? 8}h`,
+                  sub: `${baseTargetHours ?? 8}h`,
                   icon: '🏢',
                 },
                 {
                   key: 'half_am',
                   label: '오전반차',
-                  sub: `${settings?.workTypePresets?.half_am?.hours ?? 4}h`,
+                  sub: `${(baseTargetHours ?? 8) === 8 ? (settings?.workTypePresets?.half_am?.hours ?? 4) : Math.max(1, Math.round((baseTargetHours ?? 8) / 2))}h`,
                   icon: '☀️',
                 },
                 {
                   key: 'half_pm',
                   label: '오후반차',
-                  sub: `${settings?.workTypePresets?.half_pm?.hours ?? 4}h`,
+                  sub: `${(baseTargetHours ?? 8) === 8 ? (settings?.workTypePresets?.half_pm?.hours ?? 4) : Math.max(1, Math.round((baseTargetHours ?? 8) / 2))}h`,
                   icon: '☕',
                 },
                 {
                   key: 'quarter',
                   label: '반반차(연연차)',
-                  sub: `${settings?.workTypePresets?.quarter?.hours ?? 6}h`,
+                  sub: `${(baseTargetHours ?? 8) === 8 ? (settings?.workTypePresets?.quarter?.hours ?? 6) : Math.max(1, (baseTargetHours ?? 8) - 2)}h`,
                   icon: '⚡',
                 },
               ].map((item) => {
