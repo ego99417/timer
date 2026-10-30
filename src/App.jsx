@@ -51,6 +51,7 @@ import {
   parse12HourTime,
   calculateWorkedSecondsWithLunch,
   calculateEstimatedClockOut,
+  calculateNetHoursBetween,
 } from "./utils/timeFormat";
 
 // Helper to get today's date formatted as YYYY-MM-DD
@@ -264,8 +265,19 @@ export default function App() {
     if (todayWorkType === "normal") {
       return baseTargetHours;
     }
-    // 2. 반차 및 반반차: 기준 8시간 요일이면 프리셋 시간 반영, 그 외 요일은 요일 기준 비례 계산
-    const presetHours = settings.workTypePresets?.[todayWorkType]?.hours;
+    // 2. 반차 및 반반차: 프리셋의 clockIn / clockOut으로 순수 근무시간 우선 계산!
+    const preset = settings?.workTypePresets?.[todayWorkType];
+    if (preset?.clockIn && preset?.clockOut) {
+      const netH = calculateNetHoursBetween(preset.clockIn, preset.clockOut, {
+        autoLunchBreak: settings.autoLunchBreak,
+        lunchStart: settings.lunchStart,
+        lunchEnd: settings.lunchEnd,
+      });
+      if (netH > 0) {
+        return netH;
+      }
+    }
+    const presetHours = preset?.hours;
     if (baseTargetHours === 8 && typeof presetHours === "number" && presetHours > 0) {
       return presetHours;
     }
@@ -298,6 +310,7 @@ export default function App() {
       lunchStart: settings.lunchStart,
       lunchEnd: settings.lunchEnd,
       workTypePreset: preset,
+      isNormalWork: todayWorkType === "normal",
     });
 
     if (outDate) {

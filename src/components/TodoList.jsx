@@ -7,13 +7,23 @@
  * - 전체/진행중/완료 필터링 및 localStorage 연동
  */
 
-import React, { useState } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, ListTodo } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Plus, Trash2, CheckCircle2, Circle, ListTodo, Edit2, Check, X } from 'lucide-react';
 import { soundManager } from '../utils/audio';
 
 export default function TodoList({ todos, setTodos, onClose }) {
   const [inputVal, setInputVal] = useState('');
   const [filter, setFilter] = useState('all'); // 'all' | 'active' | 'completed'
+  const [editingId, setEditingId] = useState(null);
+  const [editingText, setEditingText] = useState('');
+  const editInputRef = useRef(null);
+
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingId]);
 
   const handleAdd = (e) => {
     e.preventDefault();
@@ -26,6 +36,31 @@ export default function TodoList({ todos, setTodos, onClose }) {
     };
     setTodos([newTodo, ...todos]);
     setInputVal('');
+    soundManager.playClick();
+  };
+
+  const startEdit = (todo) => {
+    setEditingId(todo.id);
+    setEditingText(todo.text);
+    soundManager.playClick();
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingText('');
+  };
+
+  const saveEdit = (id) => {
+    const trimmed = editingText.trim();
+    if (!trimmed) {
+      cancelEdit();
+      return;
+    }
+    setTodos(
+      todos.map((t) => (t.id === id ? { ...t, text: trimmed } : t))
+    );
+    setEditingId(null);
+    setEditingText('');
     soundManager.playClick();
   };
 
@@ -43,6 +78,9 @@ export default function TodoList({ todos, setTodos, onClose }) {
   };
 
   const deleteTodo = (id) => {
+    if (editingId === id) {
+      cancelEdit();
+    }
     setTodos(todos.filter((t) => t.id !== id));
     soundManager.playClick();
   };
@@ -72,7 +110,7 @@ export default function TodoList({ todos, setTodos, onClose }) {
         {onClose && (
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-2 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-2 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             닫기
           </button>
@@ -100,7 +138,7 @@ export default function TodoList({ todos, setTodos, onClose }) {
         />
         <button
           type="submit"
-          className="px-2 py-1 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white rounded-xl text-xs font-medium flex items-center justify-center transition-all shadow-sm"
+          className="px-2 py-1 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white rounded-xl text-xs font-medium flex items-center justify-center transition-all shadow-sm cursor-pointer"
         >
           <Plus size={13} />
         </button>
@@ -112,9 +150,9 @@ export default function TodoList({ todos, setTodos, onClose }) {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`flex-1 py-0.5 text-[10.5px] font-medium rounded-md transition-all ${
+            className={`flex-1 py-0.5 text-[10.5px] font-medium rounded-md transition-all cursor-pointer ${
               filter === f
-                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-2xs'
+                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-2xs font-semibold'
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
@@ -134,36 +172,99 @@ export default function TodoList({ todos, setTodos, onClose }) {
               : '새로운 할 일을 추가해보세요!'}
           </div>
         ) : (
-          filteredTodos.map((todo) => (
-            <div
-              key={todo.id}
-              className={`group flex items-center justify-between p-2 rounded-xl border transition-all ${
-                todo.completed
-                  ? 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800/50 text-slate-400'
-                  : 'bg-white dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 hover:shadow-xs'
-              }`}
-            >
-              <button
-                onClick={() => toggleTodo(todo.id)}
-                className="flex items-center gap-2 text-left flex-1 min-w-0"
+          filteredTodos.map((todo) => {
+            const isEditing = editingId === todo.id;
+            return (
+              <div
+                key={todo.id}
+                className={`group flex items-center justify-between p-2 rounded-xl border transition-all ${
+                  isEditing
+                    ? 'bg-indigo-50/50 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700/80 shadow-xs'
+                    : todo.completed
+                    ? 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800/50 text-slate-400'
+                    : 'bg-white dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 hover:shadow-xs'
+                }`}
               >
-                {todo.completed ? (
-                  <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                {isEditing ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      saveEdit(todo.id);
+                    }}
+                    className="flex items-center gap-1.5 flex-1 min-w-0"
+                  >
+                    <input
+                      ref={editInputRef}
+                      type="text"
+                      value={editingText}
+                      onChange={(e) => setEditingText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') cancelEdit();
+                      }}
+                      className="flex-1 px-2 py-0.5 text-xs rounded-lg bg-white dark:bg-slate-700 border border-indigo-400 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <button
+                      type="submit"
+                      className="p-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-md transition-colors cursor-pointer"
+                      title="수정 완료 (Enter)"
+                    >
+                      <Check size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors cursor-pointer"
+                      title="수정 취소 (Esc)"
+                    >
+                      <X size={13} />
+                    </button>
+                  </form>
                 ) : (
-                  <Circle size={16} className="text-slate-300 dark:text-slate-600 shrink-0 hover:text-indigo-400" />
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => toggleTodo(todo.id)}
+                      className="flex items-center gap-2 text-left flex-1 min-w-0 cursor-pointer"
+                    >
+                      {todo.completed ? (
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                      ) : (
+                        <Circle size={16} className="text-slate-300 dark:text-slate-600 shrink-0 hover:text-indigo-400" />
+                      )}
+                      <span
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          startEdit(todo);
+                        }}
+                        className={`text-xs truncate select-none ${todo.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''}`}
+                        title="더블클릭하거나 우측 연필 아이콘으로 수정"
+                      >
+                        {todo.text}
+                      </span>
+                    </button>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(todo)}
+                        className="p-1 text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded-md transition-colors cursor-pointer"
+                        title="할 일 내용 수정"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteTodo(todo.id)}
+                        className="p-1 text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded-md transition-colors cursor-pointer"
+                        title="삭제"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </>
                 )}
-                <span className={`text-xs truncate ${todo.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''}`}>
-                  {todo.text}
-                </span>
-              </button>
-              <button
-                onClick={() => deleteTodo(todo.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-rose-500 rounded-md transition-opacity"
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))
+              </div>
+            );
+          })
         )}
       </div>
     </div>

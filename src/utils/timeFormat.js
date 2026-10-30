@@ -172,10 +172,11 @@ export function calculateWorkedSecondsWithLunch(clockInDate, now = new Date(), l
 export function calculateEstimatedClockOut(clockInDate, targetHours, options = {}) {
   if (!clockInDate || isNaN(clockInDate.getTime())) return null;
 
-  const { autoLunchBreak, lunchStart, lunchEnd, workTypePreset } = options;
+  const { autoLunchBreak, lunchStart, lunchEnd, workTypePreset, isNormalWork } = options;
 
-  // 1. If preset clockIn & clockOut exist in Settings, directly reference them!
-  if (workTypePreset?.clockIn && workTypePreset?.clockOut) {
+  // 1. If it's a specific shift preset (half_am, half_pm, quarter) and has preset clockIn & clockOut:
+  // Base calculation directly on preset.clockOut shifted by actual clock-in delta!
+  if (!isNormalWork && workTypePreset?.clockIn && workTypePreset?.clockOut) {
     const [pInH, pInM] = workTypePreset.clockIn.split(":").map(Number);
     const [pOutH, pOutM] = workTypePreset.clockOut.split(":").map(Number);
 
@@ -189,27 +190,12 @@ export function calculateEstimatedClockOut(clockInDate, targetHours, options = {
       if (presetOutDate > presetInDate) {
         // Delta between actual/selected clock-in and preset scheduled clock-in
         const clockInDeltaMs = clockInDate.getTime() - presetInDate.getTime();
-
-        // Calculate baseline net pure hours between preset clockIn and preset clockOut
-        const presetNetHours = calculateNetHoursBetween(workTypePreset.clockIn, workTypePreset.clockOut, {
-          autoLunchBreak,
-          lunchStart,
-          lunchEnd,
-        });
-
-        // If today's targetHours is specified and differs from preset net hours (e.g. Friday 7h vs preset 8h)
-        let targetHoursDeltaMs = 0;
-        if (typeof targetHours === 'number' && targetHours > 0 && presetNetHours > 0 && Math.abs(targetHours - presetNetHours) >= 0.05) {
-          targetHoursDeltaMs = (targetHours - presetNetHours) * 3600 * 1000;
-        }
-
-        const finalMs = presetOutDate.getTime() + clockInDeltaMs + targetHoursDeltaMs;
-        return new Date(finalMs);
+        return new Date(presetOutDate.getTime() + clockInDeltaMs);
       }
     }
   }
 
-  // 2. Fallback: calculate based on targetHours + lunch break overlap
+  // 2. Normal work (or fallback): calculate based on targetHours + lunch break overlap
   if (!targetHours || targetHours <= 0) return null;
   const targetSec = targetHours * 3600;
   let clockOutMs = clockInDate.getTime() + targetSec * 1000;
